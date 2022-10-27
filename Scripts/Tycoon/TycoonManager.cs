@@ -1,0 +1,225 @@
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+using System.IO;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using System.Linq;
+
+public class IngredientSequence
+{
+    public string ingredientName;
+    public List<string> cookingSequences;
+
+    public IngredientSequence(string name, List<string> sequences)
+    {
+        ingredientName = name;
+        cookingSequences = sequences;
+    }
+}
+
+[System.Serializable]
+public class Menu
+{
+    public int gold;
+    public List<int> serveRange;
+    public float waitingTime;
+    public List<IngredientSequence> ingredientSequences;
+}
+
+public class SpecialResident
+{
+    public float waitingTime;
+    public string favoriteFood;
+}
+
+public class Order
+{
+    public string residentName;
+    public float waitingTime;
+    public List<string> menuList = new List<string>();
+
+    public Order(string name)
+    {
+        residentName = name;
+    }
+
+    public Order(string name, SpecialResident sr)
+    {
+        residentName = name;
+        menuList.Add(sr.favoriteFood);
+    }
+}
+
+public class TycoonManager : MonoBehaviour
+{
+    public static TycoonManager instance;
+
+    public Dictionary<string, Menu> menus;
+    public Dictionary<string, SpecialResident> specialResidents;
+
+    #region read json
+    void ReadRecipes()
+    {
+        menus = JsonConvert.DeserializeObject<Dictionary<string, Menu>>
+            (IOManager.instance.ReadJson2("Tycoon/Menus.json").ToString());
+    }
+
+    void ReadspecialResidents()
+    {
+        specialResidents = JsonConvert.DeserializeObject<Dictionary<string, SpecialResident>>
+            (IOManager.instance.ReadJson2("Tycoon/SpecialResidentList.json").ToString());
+    }
+
+    #endregion
+
+    int specialResidentCount = 0;
+
+    Dictionary<string, int> menuSalesVolumes = new Dictionary<string, int>();
+    int menuWholeVolume = 0;
+    int savedWholeVolume;
+
+    public List<Order> orderList = new List<Order>();
+
+
+    void DecideSpecialResidentCount()
+    {
+        int random = Random.Range(0, 100);
+
+        if (random < 10)
+            specialResidentCount = 0;
+        else if (random < 55)
+            specialResidentCount = 1;
+        else if (random < 90)
+            specialResidentCount = 2;
+        else
+            specialResidentCount = 3;
+    }
+
+    void DecideSalesVolume()
+    {
+        int random = 0;
+        Menu currentMenu;
+
+        foreach (KeyValuePair<string, Menu> menu in menus)
+        {
+            currentMenu = menu.Value;
+            random = Random.Range(currentMenu.serveRange[0], currentMenu.serveRange[1] + 1);
+            menuSalesVolumes.Add(menu.Key, random);
+            menuWholeVolume += random;
+        }
+
+        savedWholeVolume += menuWholeVolume;
+    }
+
+    void SpecialResidentsTakeMenus()
+    {
+        for (int i = 0; i < specialResidentCount; i++)
+        {
+            int specialResidentID = Random.Range(0, specialResidents.Count);
+            SpecialResident tempResident = specialResidents.ElementAt(specialResidentID).Value;
+            Order tempOrder1 = new Order(specialResidents.ElementAt(specialResidentID).Key, tempResident);
+            tempOrder1.waitingTime += menus[tempResident.favoriteFood].waitingTime;
+
+            menuSalesVolumes[tempResident.favoriteFood]--;
+            menuWholeVolume--;
+
+
+            // 다른 메뉴 선택
+            int random = Random.Range(0, 3);
+            for (int j = 0; j < random; j++)
+            {
+                int menuID = Random.Range(0, menus.Count);
+                string menuName = menus.ElementAt(menuID).Key;
+                tempOrder1.menuList.Add(menuName);
+                tempOrder1.waitingTime += menus[menuName].waitingTime;
+
+                menuSalesVolumes[menuName]--;
+                menuWholeVolume--;
+            }
+
+            orderList.Add(tempOrder1);
+            specialResidents.Remove(specialResidents.ElementAt(specialResidentID).Key);
+            //DialogueManager.instance.ReadSpecialResidentDialogues(temp.residentName);
+        }
+    }
+
+    void NormalResidentsTakeMenus()
+    {
+        while (menuWholeVolume > 3)
+        {
+            Order tempOrder1 = new Order("normal");
+
+            int menuCount = Random.Range(1, 4);
+
+            for (int i = 0; i < menuCount; i++)
+            {
+                int menuID = Random.Range(0, menus.Count);
+                string menuName = menus.ElementAt(menuID).Key;
+
+                if (menuSalesVolumes[menuName] > 0)
+                {
+                    tempOrder1.menuList.Add(menuName);
+                    tempOrder1.waitingTime += menus[menuName].waitingTime;
+                    menuSalesVolumes[menuName]--;
+                    menuWholeVolume--;
+                }
+            }
+
+            if (tempOrder1.menuList.Count == 0)
+            {
+                foreach(KeyValuePair<string, int> menuSalesVolume in menuSalesVolumes)
+                {
+                    if (menuSalesVolume.Value > 0)
+                    {
+                        string mn = menuSalesVolume.Key;
+                        tempOrder1.menuList.Add(mn);
+                        tempOrder1.waitingTime += menus[mn].waitingTime;
+                        menuSalesVolumes[mn]--;
+                        menuWholeVolume--;
+
+                        break;
+                    }
+                }
+            }
+
+            orderList.Add(tempOrder1);
+        }
+
+        if (menuWholeVolume > 0)
+        {
+            Order tempOrder2 = new Order("normal");
+            foreach (KeyValuePair<string, Menu> menu in menus)
+            {
+                string menuName = menu.Key;
+
+                while (menuSalesVolumes[menuName] > 0)
+                {
+                    tempOrder2.menuList.Add(menuName);
+                    menuSalesVolumes[menuName]--;
+                }
+
+            }
+        }
+    }
+
+    void Awake()
+    {
+        if (instance == null)
+        {
+            instance = this;
+        }
+        else
+        {
+            if (instance != this)
+                Destroy(this.gameObject);
+        }
+
+        ReadRecipes();
+        ReadspecialResidents();
+        DecideSpecialResidentCount();
+        DecideSalesVolume();
+        SpecialResidentsTakeMenus();
+        NormalResidentsTakeMenus();
+    }
+}

@@ -1,0 +1,73 @@
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.UI;
+using UnityEngine.EventSystems;
+
+public class BeforeBowlController : MonoBehaviour, IPointerClickHandler
+{
+    public string ingredientName;
+    public GameObject backgroundImage;
+
+    GameObject ingredientPrefab;
+
+    bool isEmpty = false;
+
+    public void UpdateBowl()
+    {
+        int count;
+
+        if (ItemManager.instance.inventory.ContainsKey(ingredientName))
+        {
+            count = ItemManager.instance.inventory[ingredientName];
+        }
+        else
+        {
+            count = 0;
+        }
+
+        if (count <= 1)
+        {
+            backgroundImage.SetActive(false);
+        }
+        if (count == 0)
+        {
+            isEmpty = true;
+            return;
+        }
+
+        GameObject tempIngredient = Instantiate(ingredientPrefab, this.transform);
+        tempIngredient.transform.SetParent(this.gameObject.transform);
+        tempIngredient.GetComponent<IngredientController>().Initialize(ingredientName);
+    }
+
+    public void OnPointerClick(PointerEventData pointerEventData)
+    {
+        if (isEmpty == true)
+        {
+            // 골드 소모 부분 추가해야함
+            if (ItemManager.instance.inventory.ContainsKey(ingredientName))
+            {
+                ItemManager.instance.inventory[ingredientName]++;
+            }
+            else
+            {
+                ItemManager.instance.inventory[ingredientName] = 1;
+            }
+            isEmpty = false;
+            UpdateBowl();
+        }
+    }
+
+    void Initialize()
+    {
+        ingredientPrefab = Resources.Load("Prefabs/Tycoon/DefaultIngredient") as GameObject;
+        backgroundImage.GetComponent<Image>().sprite = Resources.Load<Sprite>("Dots/Tycoon/" + ingredientName);
+    }
+
+    void Start()
+    {
+        Initialize();
+        UpdateBowl();
+    }
+}
