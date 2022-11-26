@@ -11,6 +11,8 @@ public class KitchenPlateController : MonoBehaviour, IDropHandler
 
     List<IngredientSequence> ingredients = new List<IngredientSequence>();
     bool canDrop = true;
+    bool hasFood = false;
+    string recipeName = "";
 
     public void OnDrop(PointerEventData eventData)
     {
@@ -34,10 +36,17 @@ public class KitchenPlateController : MonoBehaviour, IDropHandler
 
     public void OnServiceBellClicked()
     {
+        if (hasFood == true)
+        {
+            StartCoroutine(ServeToBar(recipeName));
+
+            return;
+        }
+
         if (ingredients.Count > 0)
         {
             canDrop = false;
-            string recipeName = "";
+            recipeName = "";
 
             foreach (KeyValuePair<string, Menu> recipe in TycoonManager.instance.menus)
             {
@@ -102,17 +111,17 @@ public class KitchenPlateController : MonoBehaviour, IDropHandler
         if (servingResult == false)
         {
             // 앵무새가 뭐라고 하는 팝업
+            hasFood = true;
             Debug.Log("??");
         }
         else
         {
             yield return new WaitForSeconds(2f);
-            // 날아가는 애니메이션 추가
+            // 앵무새가 가져가는 애니메이션 추가해야함
             resultFoodImage.SetActive(false);
             canDrop = true;
+            hasFood = false;
         }
-
-
 
         yield return null;
     }

@@ -1,24 +1,47 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using System.Linq;
+
+public class ItemInfo
+{
+    public string name;
+    public string description;
+}
 
 public class ItemManager : MonoBehaviour
 {
     public static ItemManager instance;
 
-    public Dictionary<string, int> inventory = new Dictionary<string, int>();
+    private int _gold;
 
+    public int gold
+    {
+        get { return _gold; }    // _data 반환
+        set { _gold = value; }   // value 키워드 사용
+    }
+
+    public Dictionary<string, ItemInfo> itemList = new Dictionary<string, ItemInfo>();
+    public Dictionary<string, int> inventory;
+
+    #region Data IO
     public void ReadInventory()
     {
-        inventory = IOManager.instance.ReadJson("Inventory.json").
-            ToDictionary(pair => pair.Key, pair => (int)pair.Value);
+        inventory = IOManager.instance.ReadLocalJson<Dictionary<string, int>>("Inventory");
+        Debug.Log(inventory);
     }
 
     public void WriteInventory()
     {
         IOManager.instance.WriteJson(inventory, "Inventory.json");
+        IOManager.instance.playerSettings.gold = gold;
+        IOManager.instance.WritePlayerSettings();
     }
+
+    public void ReadItemList()
+    {
+        itemList = IOManager.instance.ReadJson<Dictionary<string, ItemInfo>>("ItemList");
+    }
+    #endregion
 
     void Awake()
     {
@@ -37,10 +60,7 @@ public class ItemManager : MonoBehaviour
     void Start()
     {
         ReadInventory();
-
-/*        foreach (KeyValuePair<string, int> item in inventory)
-        {
-            Debug.Log("Key " + item.Key + "\nValue " + item.Value);
-        }*/
+        ReadItemList();
+        gold = IOManager.instance.playerSettings.gold;
     }
 }

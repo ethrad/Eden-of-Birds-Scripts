@@ -10,10 +10,11 @@ public class CookerController : MonoBehaviour, IDropHandler
     public float cookingTime;
     public bool isShaker;
     GameObject ingredient;
+    public Color color;
 
     public void OnDrop(PointerEventData eventData)
     {
-        if (transform.childCount == 1)
+        if (transform.childCount == 1 && eventData.pointerDrag.GetComponent<IngredientController>().canCook == true)
         {
             if (eventData.pointerDrag.GetComponent<IngredientController>().ingredientState == IngredientController.IngredientState.Idle)
             {
@@ -39,11 +40,12 @@ public class CookerController : MonoBehaviour, IDropHandler
 
         ingredient.GetComponent<Image>().raycastTarget = false;
         float c = ingredient.GetComponent<Image>().color.r;
-        ingredient.GetComponent<Image>().color = new Color(c, c, c, 0f);
-        ingredient.GetComponent<IngredientController>().cookingSequences.Add(this.name);
+        ingredient.GetComponent<IngredientController>().Cooking(this.name);
 
         yield return new WaitForSeconds(cookingTime);
-        ingredient.GetComponent<Image>().color = new Color(c - 0.3f, c - 0.3f, c - 0.3f);
+        ingredient.GetComponent<Image>().color = new Color(c - 0.2f, c - 0.2f, c - 0.2f);
+        ingredient.GetComponent<IngredientController>().UpdateCookingColor(color);
+        
         ingredient.GetComponent<Image>().raycastTarget = true;
         effectObject.SetActive(false);
 

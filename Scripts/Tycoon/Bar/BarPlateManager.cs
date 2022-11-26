@@ -37,8 +37,13 @@ public class BarPlateManager : MonoBehaviour
     void Plating(int plateIndex)
     {
         GameObject tempFood = Instantiate(foodPrefab, plates[plateIndex].transform);
-        tempFood.GetComponent<FoodController>().UpdateFood(foodNames[plateIndex]);
+        tempFood.GetComponent<FoodController>().UpdateFood(plateIndex, foodNames[plateIndex]);
         tempFood.transform.SetParent(plates[plateIndex].transform);
+    }
+
+    public void ResetPlate(int plateIndex)
+    {
+        foodNames[plateIndex] = "";
     }
 
 

@@ -73,7 +73,7 @@ public class PlayerController : MonoBehaviour
     */
     #endregion
 
-    #region Damaged
+    #region Damaged and Dead
 
     public int maxHP;
     public int HP;
@@ -92,6 +92,7 @@ public class PlayerController : MonoBehaviour
             if (HP <= 0)
             {
                 Dead();
+                return;
             }
 
             StartCoroutine(DamageDelay());
@@ -112,7 +113,10 @@ public class PlayerController : MonoBehaviour
     void Dead()
     {
         canMove = false;
-        // 죽는 애니메이션 재생
+        Debug.Log("죽음");
+
+        gameObject.tag = "object";
+        anim.SetTrigger("isDead");
     }
     #endregion
 

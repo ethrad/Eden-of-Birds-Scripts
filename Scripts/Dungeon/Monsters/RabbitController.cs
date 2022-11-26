@@ -6,47 +6,72 @@ public class RabbitController : MonsterController
 {
     public GameObject rabbitPrefab;
     public bool isOriginal = true;
-    public bool canCopy = true;
-    float copyDelay = 3f;
+    public bool canCopy;
+    public float copyDelay;
     float copyTimer = 0f;
-    
-    protected override void OnTriggerExit2D(Collider2D col)
-    {
-        if (col.gameObject.tag == "Player")
-        {
-            state = State.Follow;
-        }
 
-    }
+    //±¸ ¹Ý°æ
+    public float maxRadiusScale;
 
+    RaycastHit hit;
 
     void Copy()
     {
-        if (copyTimer > copyDelay)
+        if (isOriginal == true && canCopy == true)
         {
-            if (canCopy == true)
+            if (copyTimer > copyDelay)
             {
-                int randX = Random.Range(0, 2);
-                int randY = Random.Range(0, 2);
+                bool isHit = true;
+                Vector3 pos = new Vector3(0, 0, 0);
+                float radiusScale = 0;
 
-                if (randX == 0)
-                    randX = -1;
-                else randX = 1;
+                while (isHit)
+                {
+                    pos = Random.insideUnitSphere.normalized;
+                    radiusScale = Random.Range(0.2f, maxRadiusScale);
 
-                if (randY == 0)
-                    randY = -1;
-                else randY = 1;
+                    isHit = Physics.SphereCast(transform.position, radiusScale, pos, out hit);
+                }
 
-                Vector3 pos = transform.position + new Vector3(Random.Range(0.6f, 1f) * randX, Random.Range(0.6f, 1f) * randY, 0);
-
-                GameObject copiedRabbit = Instantiate(rabbitPrefab, pos, Quaternion.Euler(0, 0, 0));
+                GameObject copiedRabbit = Instantiate(rabbitPrefab, transform.position + pos * radiusScale, Quaternion.Euler(0, 0, 0));
                 copiedRabbit.GetComponent<RabbitController>().isOriginal = false;
 
+                DungeonManager.instance.monsterCount++;
                 copyTimer = 0;
             }
         }
 
         copyTimer += Time.deltaTime;
+    }
+
+    protected override void Dead()
+    {
+        if (isOriginal == true)
+        {
+            int random = Random.Range(0, 100);
+
+            int itemIndex = -1;
+            int tempProb = 0;
+
+            for (int i = 0; i < itemProb.Length; i++)
+            {
+                if (random <= itemProb[i] + tempProb)
+                {
+                    itemIndex = i;
+                }
+                else break;
+
+                tempProb += itemProb[i];
+            }
+
+            if (itemIndex != -1)
+            {
+                Instantiate(itemArray[itemIndex], transform.position, Quaternion.Euler(0, 0, 0));
+            }
+        }
+
+        DungeonManager.instance.UpdateMonsterCount();
+        Destroy(gameObject);
     }
 
     // Update is called once per frame

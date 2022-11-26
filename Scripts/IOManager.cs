@@ -6,35 +6,53 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System.Linq;
 
+public class PlayerSettings
+{
+    public int gold;
+    public bool isTutorialCleared;
+
+    public PlayerSettings(int gold, bool isTutorialCleared)
+    {
+        this.gold = gold;
+        this.isTutorialCleared = isTutorialCleared;
+    }
+}
+
 public class IOManager : MonoBehaviour
 {
     public static IOManager instance;
 
+    public PlayerSettings playerSettings;
+
     string path;
+    string filePath;
 
-    public Dictionary<string, dynamic> ReadJson(string fileName)
+    public T ReadJson<T>(string fileName)
     {
-        using (StreamReader file = File.OpenText(path + fileName))
-        using (JsonTextReader reader = new JsonTextReader(file))
-        {
-            JObject json = (JObject)JToken.ReadFrom(reader);
+        TextAsset textAsset = Resources.Load<TextAsset>(path + fileName);
 
-            return JsonConvert.DeserializeObject<Dictionary<string, dynamic>>(json.ToString());
+        return JsonConvert.DeserializeObject<T>(textAsset.ToString());
+    }
+
+    public T ReadLocalJson<T>(string fileName) where T : new()
+    {
+        if (System.IO.File.Exists(filePath + "/" + fileName + ".json"))
+        {
+            using (StreamReader file = File.OpenText(filePath + "/" + fileName + ".json"))
+            using (JsonTextReader reader = new JsonTextReader(file))
+            {
+                JObject json = (JObject)JToken.ReadFrom(reader);
+
+                return JsonConvert.DeserializeObject<T>(json.ToString());
+            }
+        }
+        else
+        {
+            return new T();
         }
     }
 
-    public JObject ReadJson2(string fileName)
-    {
-        using (StreamReader file = File.OpenText(path + fileName))
-        using (JsonTextReader reader = new JsonTextReader(file))
-        {
-            JObject json = (JObject)JToken.ReadFrom(reader);
-
-            return json;
-        }
-    }
-
-    public void WriteJson<T>(Dictionary<string, T> input, string fileName)
+    public void WriteJson<T>(T input, string fileName)
     {
         string json = JsonConvert.SerializeObject(input);
         JObject jobject = JObject.Parse(json);
@@ -42,6 +60,32 @@ public class IOManager : MonoBehaviour
         File.WriteAllText(path + fileName, jobject.ToString());
     }
 
+    public void ReadPlayerSettings()
+    {
+        if (System.IO.File.Exists(filePath + "/playerSettings.json"))
+        {
+            using (StreamReader file = File.OpenText(filePath + "/playerSettings.json"))
+            using (JsonTextReader reader = new JsonTextReader(file))
+            {
+                JObject json = (JObject)JToken.ReadFrom(reader);
+
+                playerSettings = JsonConvert.DeserializeObject<PlayerSettings>(json.ToString());
+            }
+        }
+        else
+        {
+            playerSettings = new PlayerSettings(0, false);
+            WritePlayerSettings();
+        }
+    }
+
+    public void WritePlayerSettings()
+    {
+        string json = JsonConvert.SerializeObject(playerSettings);
+        JObject jobject = JObject.Parse(json);
+
+        File.WriteAllText(filePath + "/playerSettings.json", jobject.ToString());
+    }
 
     void Awake()
     {
@@ -56,7 +100,10 @@ public class IOManager : MonoBehaviour
                 Destroy(this.gameObject);
         }
 
-        // path = Application.persistentDataPath + "/Datas/";
-        path = "Assets/Datas/";
+        filePath = Application.persistentDataPath;
+        Debug.Log(filePath);
+        path = "Datas/";
+
+        ReadPlayerSettings();
     }
 }

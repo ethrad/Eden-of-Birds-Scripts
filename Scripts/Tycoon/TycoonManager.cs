@@ -1,11 +1,9 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using System.IO;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using System.Linq;
 
+[System.Serializable]
 public class IngredientSequence
 {
     public string ingredientName;
@@ -27,12 +25,14 @@ public class Menu
     public List<IngredientSequence> ingredientSequences;
 }
 
+[System.Serializable]
 public class SpecialResident
 {
     public float waitingTime;
     public string favoriteFood;
 }
 
+[System.Serializable]
 public class Order
 {
     public string residentName;
@@ -55,32 +55,35 @@ public class TycoonManager : MonoBehaviour
 {
     public static TycoonManager instance;
 
+    public GameObject angryUI;
+    public int angrySeatID = -1;
+    public GameObject goldMinusUI;
+
     public Dictionary<string, Menu> menus;
     public Dictionary<string, SpecialResident> specialResidents;
 
     #region read json
     void ReadRecipes()
     {
-        menus = JsonConvert.DeserializeObject<Dictionary<string, Menu>>
-            (IOManager.instance.ReadJson2("Tycoon/Menus.json").ToString());
+        menus = IOManager.instance.ReadJson<Dictionary<string, Menu>>("Tycoon/Menus");
     }
 
     void ReadspecialResidents()
     {
-        specialResidents = JsonConvert.DeserializeObject<Dictionary<string, SpecialResident>>
-            (IOManager.instance.ReadJson2("Tycoon/SpecialResidentList.json").ToString());
+        specialResidents = IOManager.instance.ReadJson<Dictionary<string, SpecialResident>>("Tycoon/SpecialResidentList");
     }
 
     #endregion
 
+    #region decide order
     int specialResidentCount = 0;
 
     Dictionary<string, int> menuSalesVolumes = new Dictionary<string, int>();
     int menuWholeVolume = 0;
     int savedWholeVolume;
 
+    [HideInInspector]
     public List<Order> orderList = new List<Order>();
-
 
     void DecideSpecialResidentCount()
     {
@@ -168,7 +171,7 @@ public class TycoonManager : MonoBehaviour
 
             if (tempOrder1.menuList.Count == 0)
             {
-                foreach(KeyValuePair<string, int> menuSalesVolume in menuSalesVolumes)
+                foreach (KeyValuePair<string, int> menuSalesVolume in menuSalesVolumes)
                 {
                     if (menuSalesVolume.Value > 0)
                     {
@@ -202,6 +205,71 @@ public class TycoonManager : MonoBehaviour
             }
         }
     }
+    #endregion
+
+    #region angry UI
+    public void ActivateAngryUI(int angrySeatID)
+    {
+        this.angrySeatID = angrySeatID;
+        angryUI.SetActive(true);
+
+        StartCoroutine(UITimer());
+    }
+
+    IEnumerator UITimer()
+    {
+        int tempID = angrySeatID;
+
+        yield return new WaitForSeconds(2f);
+
+        if (tempID == angrySeatID)
+        {
+            angryUI.SetActive(false);
+        }
+    }
+    #endregion
+
+    #region tycoon info and end tycoon
+    
+    [HideInInspector]
+    public int earnedGold = 0;
+
+    public void EarnGold(string foodName)
+    {
+        earnedGold += menus[foodName].gold;
+    }
+
+
+    public GameObject tycoonEndPanel;
+
+    int endCount = 0;
+
+    public List<string> specialResidentNames = new List<string>();
+    public Dictionary<string, int> servedMenus = new Dictionary<string, int>();
+
+
+    public void EndTycoon()
+    {
+        endCount++;
+
+        if (endCount == 3)
+        {
+            StartCoroutine(WaitTycoonEnd());
+        }
+    }
+
+
+    IEnumerator WaitTycoonEnd()
+    {
+        yield return new WaitForSeconds(1f);
+
+        tycoonEndPanel.SetActive(true);
+
+        //tycoonEndPanel.GetComponent<TycoonEndPanel>().UpdatePanel();
+    }
+
+    #endregion
+
 
     void Awake()
     {

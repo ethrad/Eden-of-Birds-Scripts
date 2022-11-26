@@ -222,7 +222,7 @@ public class MonsterController : MonoBehaviour
         yield return null;
     }
 
-    int countTime = 0;
+    //int countTime = 0;
     public SpriteRenderer spriteRenderer;
 
     IEnumerator ColorChange()
@@ -244,7 +244,7 @@ public class MonsterController : MonoBehaviour
         }*/
 
         spriteRenderer.color = new Color32(255, 255, 255, 255);
-        countTime = 0;
+        //countTime = 0;
         yield return null;
     }
     #endregion
@@ -254,11 +254,11 @@ public class MonsterController : MonoBehaviour
     public GameObject[] itemArray;
     public int[] itemProb;
 
-    public int monsterIndex;
-
-    protected void Dead()
+    protected virtual void Dead()
     {
         int random = Random.Range(0, 100);
+
+        Debug.Log(random);
 
         int itemIndex = -1;
         int tempProb = 0;
@@ -279,8 +279,7 @@ public class MonsterController : MonoBehaviour
             Instantiate(itemArray[itemIndex], transform.position, Quaternion.Euler(0, 0, 0));
         }
 
-
-        //DungeonManager.instance.DeadSign(monsterIndex);
+        DungeonManager.instance.UpdateMonsterCount();
         Destroy(gameObject);
 
     }

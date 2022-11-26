@@ -28,6 +28,8 @@ public class SeatController : MonoBehaviour, IDropHandler
                 order.menuList[i] = "";
                 orderBalloon.GetComponent<OrderBalloonController>().MarkServedFood(i);
                 servedFoodCount++;
+                TycoonManager.instance.EarnGold(eventData.pointerDrag.GetComponent<FoodController>().foodName);
+                eventData.pointerDrag.GetComponent<FoodController>().ResetPlate();
 
                 if (servedFoodCount == order.menuList.Count)
                 {
@@ -54,7 +56,7 @@ public class SeatController : MonoBehaviour, IDropHandler
         orderBalloon.GetComponent<OrderBalloonController>().StopBalloon();
         orderBalloon.SetActive(false);
         angry.SetActive(true);
-
+        TycoonManager.instance.ActivateAngryUI(seatID);
         StartCoroutine(ResetSeat());
     }
 
@@ -68,7 +70,7 @@ public class SeatController : MonoBehaviour, IDropHandler
         heart.SetActive(false);
         angry.SetActive(false);
         orderBalloon.GetComponent<OrderBalloonController>().ResetBalloon();
-        gameObject.SetActive(true);
+        
         BarManager.instance.UpdateSeat(seatID);
 
         yield return null;
@@ -85,6 +87,7 @@ public class SeatController : MonoBehaviour, IDropHandler
         }
         characterImage.GetComponent<Animator>().runtimeAnimatorController = Resources.Load<RuntimeAnimatorController>("Animations/" + order.residentName);
 
+        gameObject.SetActive(true);
         orderBalloon.SetActive(true);
         orderBalloon.GetComponent<OrderBalloonController>().UpdateBalloon(order);
     }

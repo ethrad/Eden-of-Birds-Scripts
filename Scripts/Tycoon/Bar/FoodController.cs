@@ -8,11 +8,18 @@ public class FoodController : MonoBehaviour, IBeginDragHandler, IEndDragHandler,
 {
     Vector3 DefaultPos;
     public string foodName;
+    public int plateIndex;
 
-    public void UpdateFood(string recipeName)
+    public void UpdateFood(int plateIndex, string recipeName)
     {
         foodName = recipeName;
+        this.plateIndex = plateIndex;
         GetComponent<Image>().sprite = Resources.Load<Sprite>("Dots/Tycoon/" + foodName);
+    }
+
+    public void ResetPlate()
+    {
+        BarPlateManager.instance.ResetPlate(plateIndex);
     }
 
     void IBeginDragHandler.OnBeginDrag(PointerEventData eventData)
@@ -25,6 +32,7 @@ public class FoodController : MonoBehaviour, IBeginDragHandler, IEndDragHandler,
     {
         Vector3 currentPos = Camera.main.ScreenToWorldPoint(eventData.position);
         currentPos.z = 90f;
+        currentPos.y -= 160f;
         this.transform.position = currentPos;
     }
 

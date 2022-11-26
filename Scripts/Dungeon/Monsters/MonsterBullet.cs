@@ -14,6 +14,7 @@ public class MonsterBullet : Bullet
         if (col.gameObject.tag == targetTag)
         {
             col.gameObject.GetComponent<PlayerController>().Damaged(damage);
+            Destroy(this.gameObject);
         }
     }
 

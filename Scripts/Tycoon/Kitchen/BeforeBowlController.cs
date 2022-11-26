@@ -7,6 +7,7 @@ using UnityEngine.EventSystems;
 public class BeforeBowlController : MonoBehaviour, IPointerClickHandler
 {
     public string ingredientName;
+    public int gold;
     public GameObject backgroundImage;
 
     GameObject ingredientPrefab;
@@ -28,7 +29,7 @@ public class BeforeBowlController : MonoBehaviour, IPointerClickHandler
 
         if (count <= 1)
         {
-            backgroundImage.SetActive(false);
+            backgroundImage.GetComponent<Image>().color = new Color(0.65f, 0.65f, 0.65f, 0.5f);
         }
         if (count == 0)
         {
@@ -54,6 +55,13 @@ public class BeforeBowlController : MonoBehaviour, IPointerClickHandler
             {
                 ItemManager.instance.inventory[ingredientName] = 1;
             }
+
+            GameObject tempText = Instantiate(TycoonManager.instance.goldMinusUI);
+            tempText.GetComponent<Text>().text = "-" + gold + " G";
+            tempText.transform.SetParent(transform);
+            tempText.GetComponent<RectTransform>().anchoredPosition = new Vector2(0, 0);
+            tempText.transform.SetParent(transform.parent);
+
             isEmpty = false;
             UpdateBowl();
         }

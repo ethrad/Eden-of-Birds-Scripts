@@ -6,7 +6,9 @@ public class DungeonManager : MonoBehaviour
 {
     public static DungeonManager instance;
 
-   
+    public Dictionary<string, int> tempInventory = new Dictionary<string, int>();
+
+    #region Object Pooling
     public GameObject player;
 
     [SerializeField]
@@ -15,7 +17,7 @@ public class DungeonManager : MonoBehaviour
 
     private Dictionary<string, Queue<GameObject>> poolingObjectQueues = new Dictionary<string, Queue<GameObject>>();
 
-    private void Initialize(int initCount)
+    private void InitializeObject(int initCount)
     {
         for (int i = 0; i < prefabs.Length; i++)
         {
@@ -61,6 +63,79 @@ public class DungeonManager : MonoBehaviour
         instance.poolingObjectQueues[objectName].Enqueue(obj);
     }
 
+    #endregion
+
+    #region Manage Dungeon Rooms
+
+    public GameObject virtualCamera;
+
+    public GameObject rooms;
+    int roomIndex;
+
+    public int monsterCount;
+    public bool isRoomCleared;
+    public bool isDungeonCleared;
+
+    void SelectRoom()
+    {
+        monsterCount = 0;
+        isRoomCleared = false;
+
+        roomIndex = Random.Range(0, rooms.transform.childCount);
+
+        GameObject tempRoom = rooms.transform.GetChild(roomIndex).gameObject;
+
+        for (int i = 0; i < tempRoom.GetComponent<RoomController>().monsterNums.Length; i++)
+        {
+            monsterCount += tempRoom.GetComponent<RoomController>().monsterNums[i];
+        }
+
+        tempRoom.GetComponent<RoomController>().Initialize();
+    }
+
+    public void ClearRoom()
+    {
+        Destroy(rooms.transform.GetChild(roomIndex).gameObject);
+        SelectRoom();
+    }
+
+    public void UpdateMonsterCount()
+    {
+        monsterCount--;
+
+        if (monsterCount <= 0)
+        {
+            isRoomCleared = true;
+
+            if (rooms.transform.childCount == 1)
+            {
+                isDungeonCleared = true;
+            }
+
+            rooms.transform.GetChild(roomIndex).gameObject.GetComponent<RoomController>().ClearRoom(isDungeonCleared);
+        }
+    }
+
+    #endregion
+
+
+    public GameObject dungeonEndPanel;
+    public GameObject dungeonFailPanel;
+    
+    public void ClearDungeon()
+    {
+        // 추가 골드 있음
+        //ItemManager.instance.gold += ;
+        dungeonEndPanel.GetComponent<DungeonEndPanel>().UpdatePanel();
+        dungeonEndPanel.SetActive(true);
+    }
+
+    public void FailDungeon()
+    {
+        // 아이템 그대로 얻는데 치료비 골드 차감
+        //ItemManager.instance.gold -= ;
+        dungeonFailPanel.SetActive(true);
+    }
 
     void Awake()
     {
@@ -74,6 +149,7 @@ public class DungeonManager : MonoBehaviour
                 Destroy(this.gameObject);
         }
 
-        Initialize(20);
+        InitializeObject(20);
+        SelectRoom();
     }
 }

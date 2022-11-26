@@ -8,7 +8,7 @@ public class RabbitRecognitionController : MonoBehaviour
 
     void OnTriggerEnter2D(Collider2D col)
     {
-        if (col.gameObject.tag == "Player")
+        if (col.gameObject.tag == "player")
         {
             Monster.GetComponent<MonsterController>().state = MonsterController.State.Follow;
             Monster.GetComponent<RabbitController>().canCopy = true;
@@ -17,7 +17,7 @@ public class RabbitRecognitionController : MonoBehaviour
 
     void OnTriggerExit2D(Collider2D col)
     {
-        if (col.gameObject.tag == "Player")
+        if (col.gameObject.tag == "player")
         {
             Monster.GetComponent<MonsterController>().state = MonsterController.State.Idle;
             Monster.GetComponent<RabbitController>().canCopy = false;
@@ -28,4 +28,5 @@ public class RabbitRecognitionController : MonoBehaviour
     {
         Monster = gameObject.transform.parent.transform.gameObject;
     }
+    
 }

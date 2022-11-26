@@ -17,13 +17,20 @@ public class BarManager : MonoBehaviour
 
     public void UpdateSeat(int seatID)
     {
-        int orderID = Random.Range(0, TycoonManager.instance.orderList.Count);
-        Order tempOrder = TycoonManager.instance.orderList[orderID];
+        if (TycoonManager.instance.orderList.Count == 0)
+        {
+            TycoonManager.instance.EndTycoon();
+        }
+        else
+        {
+            int orderID = Random.Range(0, TycoonManager.instance.orderList.Count);
+            Order tempOrder = TycoonManager.instance.orderList[orderID];
 
-        seats[seatID].GetComponent<SeatController>().UpdateSeat(tempOrder);
-        seats[seatID].GetComponent<SeatController>().seatID = seatID;
-        
-        TycoonManager.instance.orderList.RemoveAt(orderID);
+            seats[seatID].GetComponent<SeatController>().UpdateSeat(tempOrder);
+            seats[seatID].GetComponent<SeatController>().seatID = seatID;
+
+            TycoonManager.instance.orderList.RemoveAt(orderID);
+        }
     }
 
     void Awake()
