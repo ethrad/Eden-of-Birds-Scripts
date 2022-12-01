@@ -20,14 +20,13 @@ public class ItemManager : MonoBehaviour
         set { _gold = value; }   // value 키워드 사용
     }
 
-    public Dictionary<string, ItemInfo> itemList = new Dictionary<string, ItemInfo>();
+    public Dictionary<string, ItemInfo> itemList;
     public Dictionary<string, int> inventory;
 
     #region Data IO
     public void ReadInventory()
     {
         inventory = IOManager.instance.ReadLocalJson<Dictionary<string, int>>("Inventory");
-        Debug.Log(inventory);
     }
 
     public void WriteInventory()

@@ -22,6 +22,7 @@ public class Menu
     public int gold;
     public List<int> serveRange;
     public float waitingTime;
+    public string koreanName;
     public List<IngredientSequence> ingredientSequences;
 }
 

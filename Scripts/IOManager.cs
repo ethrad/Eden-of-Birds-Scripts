@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 using System.IO;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -57,7 +58,7 @@ public class IOManager : MonoBehaviour
         string json = JsonConvert.SerializeObject(input);
         JObject jobject = JObject.Parse(json);
 
-        File.WriteAllText(path + fileName, jobject.ToString());
+        File.WriteAllText(filePath + "/" + fileName, jobject.ToString());
     }
 
     public void ReadPlayerSettings()
@@ -101,7 +102,7 @@ public class IOManager : MonoBehaviour
         }
 
         filePath = Application.persistentDataPath;
-        Debug.Log(filePath);
+
         path = "Datas/";
 
         ReadPlayerSettings();

@@ -20,8 +20,7 @@ public class PlayerBullet : Bullet
 
     public override void Initialize(Vector3 dir)
     {
-        Vector3 tempVector = DungeonManager.instance.player.transform.position;
-        transform.position = new Vector3(tempVector.x, tempVector.y, tempVector.z);
+        transform.position = DungeonManager.instance.player.transform.position;
         this.dir = dir.normalized;
         StartCoroutine(DestroySelf());
     }

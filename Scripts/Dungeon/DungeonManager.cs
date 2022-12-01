@@ -76,6 +76,9 @@ public class DungeonManager : MonoBehaviour
     public bool isRoomCleared;
     public bool isDungeonCleared;
 
+    //몬스터 다 처치 플래그
+    public static bool isClear = false;
+
     void SelectRoom()
     {
         monsterCount = 0;
@@ -95,7 +98,13 @@ public class DungeonManager : MonoBehaviour
 
     public void ClearRoom()
     {
-        Destroy(rooms.transform.GetChild(roomIndex).gameObject);
+        StartCoroutine(DestroyRoom(rooms.transform.GetChild(roomIndex).gameObject));
+    }
+
+    IEnumerator DestroyRoom(GameObject go)
+    {
+        Destroy(go);
+        yield return new WaitForEndOfFrame();
         SelectRoom();
     }
 
@@ -105,11 +114,13 @@ public class DungeonManager : MonoBehaviour
 
         if (monsterCount <= 0)
         {
+            isClear = true;
             isRoomCleared = true;
-
             if (rooms.transform.childCount == 1)
             {
                 isDungeonCleared = true;
+                adjustGold = 30;
+                ItemManager.instance.gold += 30;
             }
 
             rooms.transform.GetChild(roomIndex).gameObject.GetComponent<RoomController>().ClearRoom(isDungeonCleared);
@@ -121,11 +132,10 @@ public class DungeonManager : MonoBehaviour
 
     public GameObject dungeonEndPanel;
     public GameObject dungeonFailPanel;
+    public int adjustGold = 0;
     
     public void ClearDungeon()
     {
-        // 추가 골드 있음
-        //ItemManager.instance.gold += ;
         dungeonEndPanel.GetComponent<DungeonEndPanel>().UpdatePanel();
         dungeonEndPanel.SetActive(true);
     }
@@ -133,7 +143,10 @@ public class DungeonManager : MonoBehaviour
     public void FailDungeon()
     {
         // 아이템 그대로 얻는데 치료비 골드 차감
-        //ItemManager.instance.gold -= ;
+        adjustGold = Mathf.FloorToInt(ItemManager.instance.gold * 0.05f);
+        ItemManager.instance.gold -= adjustGold;
+        Time.timeScale = 0f;
+        dungeonFailPanel.GetComponent<DungeonEndPanel>().UpdatePanel();
         dungeonFailPanel.SetActive(true);
     }
 

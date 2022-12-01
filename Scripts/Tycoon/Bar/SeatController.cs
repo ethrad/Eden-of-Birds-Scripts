@@ -11,6 +11,10 @@ public class SeatController : MonoBehaviour, IDropHandler
     public GameObject heart;
     public GameObject angry;
 
+/*    AudioSource audioSource;
+    public AudioClip audioEnter;
+*/
+    [HideInInspector]
     public Order order;
 
     [HideInInspector]
@@ -86,9 +90,16 @@ public class SeatController : MonoBehaviour, IDropHandler
             order.residentName += random.ToString();
         }
         characterImage.GetComponent<Animator>().runtimeAnimatorController = Resources.Load<RuntimeAnimatorController>("Animations/" + order.residentName);
-
+/*
+        audioSource.clip = audioEnter;
+        audioSource.Play();*/
         gameObject.SetActive(true);
         orderBalloon.SetActive(true);
         orderBalloon.GetComponent<OrderBalloonController>().UpdateBalloon(order);
     }
+
+/*    void Start()
+    {
+        this.audioSource = GetComponent<AudioSource>();
+    }*/
 }

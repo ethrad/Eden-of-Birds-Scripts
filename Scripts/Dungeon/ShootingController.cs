@@ -55,7 +55,6 @@ public class ShootingController : MonoBehaviour, IBeginDragHandler, IEndDragHand
         if (canShoot == true)
         {
             GameObject bullet = DungeonManager.instance.GetObject("PlayerBullet");
-            bullet.transform.SetParent(DungeonManager.instance.player.transform);
             bullet.GetComponent<Bullet>().Initialize(-dir);
 
             canShoot = false;

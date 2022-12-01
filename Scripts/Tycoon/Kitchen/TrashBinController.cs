@@ -13,8 +13,6 @@ public class TrashBinController : MonoBehaviour, IDropHandler
             ingredient.GetComponent<IngredientController>().ingredientState = IngredientController.IngredientState.Dumped;
             ingredient.transform.SetParent(this.transform);
             ingredient.GetComponent<RectTransform>().anchoredPosition = new Vector3(0, 0, 0);
-
-            Debug.Log(eventData.pointerDrag.name);
         }
     }
 }

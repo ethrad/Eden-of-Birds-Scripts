@@ -19,7 +19,7 @@ public class DungeonEndPanel : MonoBehaviour
             tempSlot.GetComponent<ItemSlotController>().UpdateItem(item.Key, item.Value);
         }
 
-        goldText.GetComponent<Text>().text = "";
+        goldText.GetComponent<Text>().text = DungeonManager.instance.adjustGold.ToString();
     }
 
     public void OnDungeonExitButtonClicked()
@@ -28,15 +28,16 @@ public class DungeonEndPanel : MonoBehaviour
         {
             if (ItemManager.instance.inventory.ContainsKey(item.Key))
             {
-                ItemManager.instance.inventory[item.Key]++;
+                ItemManager.instance.inventory[item.Key] += item.Value;
             }
             else
             {
-                ItemManager.instance.inventory[item.Key] = 1;
+                ItemManager.instance.inventory[item.Key] = item.Value;
             }
         }
 
         ItemManager.instance.WriteInventory();
+        Time.timeScale = 1f;
 
         SceneManager.LoadScene("Town");
     }

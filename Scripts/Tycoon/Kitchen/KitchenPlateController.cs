@@ -8,6 +8,8 @@ using System.Linq;
 public class KitchenPlateController : MonoBehaviour, IDropHandler
 {
     public GameObject resultFoodImage;
+    public GameObject parrotHand;
+    public GameObject parrotHaneAngry;
 
     List<IngredientSequence> ingredients = new List<IngredientSequence>();
     bool canDrop = true;
@@ -80,13 +82,18 @@ public class KitchenPlateController : MonoBehaviour, IDropHandler
                 }
             }
 
-            Debug.Log(recipeName);
-
             if (recipeName == "")
             {
                 // 쓰레기 완성
                 resultFoodImage.GetComponent<Image>().sprite = Resources.Load<Sprite>("Dots/Tycoon/failedFood");
                 resultFoodImage.SetActive(true);
+
+                if (IOManager.instance.playerSettings.isTutorialCleared == false)
+                {
+                    KitchenTycoonTutorial.instance.foodName = "맛없는 쓰레기";
+                    KitchenTycoonTutorial.instance.CompleteFood();
+                }
+
                 StartCoroutine(ThrowAway());
             }
             else
@@ -94,6 +101,13 @@ public class KitchenPlateController : MonoBehaviour, IDropHandler
                 resultFoodImage.GetComponent<Image>().sprite = Resources.Load<Sprite>("Dots/Tycoon/" + recipeName);
                 resultFoodImage.SetActive(true);
                 StartCoroutine(ServeToBar(recipeName));
+
+                if (IOManager.instance.playerSettings.isTutorialCleared == false)
+                {
+                    KitchenTycoonTutorial.instance.foodName = "맛있는 " + TycoonManager.instance.menus[recipeName].koreanName;
+                    Debug.Log(TycoonManager.instance.menus[recipeName].koreanName);
+                    KitchenTycoonTutorial.instance.CompleteFood();
+                }
             }
 
             ingredients.Clear();
@@ -104,21 +118,46 @@ public class KitchenPlateController : MonoBehaviour, IDropHandler
 
     }
 
+    public float parrotHandSpeed;
+
     IEnumerator ServeToBar(string recipeName)
     {
         bool servingResult = BarPlateManager.instance.GetServed(recipeName);
 
         if (servingResult == false)
         {
-            // 앵무새가 뭐라고 하는 팝업
             hasFood = true;
-            Debug.Log("??");
+
+            parrotHand.SetActive(true);
+            parrotHaneAngry.SetActive(true);
+            Vector3 tempV = parrotHand.GetComponent<RectTransform>().anchoredPosition;
+            parrotHand.GetComponent<RectTransform>().anchoredPosition = new Vector3(tempV.x, -255, tempV.z);
+
+            yield return new WaitForSeconds(1f);
+            parrotHand.SetActive(false);
+            parrotHaneAngry.SetActive(false);
+
         }
         else
         {
-            yield return new WaitForSeconds(2f);
-            // 앵무새가 가져가는 애니메이션 추가해야함
+            parrotHand.SetActive(true);
+
+            Vector3 tempV = parrotHand.GetComponent<RectTransform>().anchoredPosition;
+
+            for (float y = -430; y <= 120; y += Time.deltaTime * parrotHandSpeed)
+            {
+                parrotHand.GetComponent<RectTransform>().anchoredPosition = new Vector3(tempV.x, y, tempV.z);
+                yield return null;
+            }
+
             resultFoodImage.SetActive(false);
+
+            for (float y = 120; y >= -430; y -= Time.deltaTime * parrotHandSpeed)
+            {
+                parrotHand.GetComponent<RectTransform>().anchoredPosition = new Vector3(tempV.x, y, tempV.z);
+                yield return null;
+            }
+
             canDrop = true;
             hasFood = false;
         }
@@ -128,7 +167,14 @@ public class KitchenPlateController : MonoBehaviour, IDropHandler
 
     IEnumerator ThrowAway()
     {
+        parrotHand.SetActive(true);
+        parrotHaneAngry.SetActive(true);
+        Vector3 tempV = parrotHand.GetComponent<RectTransform>().anchoredPosition;
+        parrotHand.GetComponent<RectTransform>().anchoredPosition = new Vector3(tempV.x, -255, tempV.z);
+
         yield return new WaitForSeconds(2f);
+        parrotHand.SetActive(false);
+        parrotHaneAngry.SetActive(false);
 
         resultFoodImage.SetActive(false);
         canDrop = true;

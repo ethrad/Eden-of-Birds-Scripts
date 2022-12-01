@@ -53,7 +53,7 @@ public class OrderBalloonController : MonoBehaviour
     {
         for (int i = 0; i < 3; i++)
         {
-            foodImages[i].GetComponent<Image>().sprite = null;
+            foodImages[i].GetComponent<Image>().sprite = Resources.Load<Sprite>("Dots/Tycoon/transparent");
             foodImages[i].transform.GetChild(0).gameObject.SetActive(false);
         }
     }

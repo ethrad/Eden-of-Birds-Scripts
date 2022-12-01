@@ -20,7 +20,7 @@ public class BarPlateManager : MonoBehaviour
             {
                 fullFlag = false;
                 foodNames[i] = recipeName;
-                Plating(i);
+                StartCoroutine(Plating(i));
                 break;
             }
             fullFlag = true;
@@ -34,8 +34,10 @@ public class BarPlateManager : MonoBehaviour
         return true;
     }
 
-    void Plating(int plateIndex)
+    IEnumerator Plating(int plateIndex)
     {
+        yield return new WaitForSeconds(2.5f);
+
         GameObject tempFood = Instantiate(foodPrefab, plates[plateIndex].transform);
         tempFood.GetComponent<FoodController>().UpdateFood(plateIndex, foodNames[plateIndex]);
         tempFood.transform.SetParent(plates[plateIndex].transform);

@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class PlayerController : MonoBehaviour
 {
@@ -75,6 +76,7 @@ public class PlayerController : MonoBehaviour
 
     #region Damaged and Dead
 
+    public Image HPBar;
     public int maxHP;
     public int HP;
     bool canDamaged;
@@ -88,6 +90,8 @@ public class PlayerController : MonoBehaviour
             anim.SetTrigger("isDamaged");
 
             HP -= damage;
+
+            HPBar.fillAmount = (float)HP / maxHP;
 
             if (HP <= 0)
             {
@@ -113,11 +117,20 @@ public class PlayerController : MonoBehaviour
     void Dead()
     {
         canMove = false;
-        Debug.Log("Á×À½");
 
         gameObject.tag = "object";
         anim.SetTrigger("isDead");
+        GetComponent<Rigidbody2D>().constraints = RigidbodyConstraints2D.FreezeAll;
+        StartCoroutine(DeadDelay());
     }
+
+    IEnumerator DeadDelay()
+    {
+        yield return new WaitForSeconds(3f);
+
+        DungeonManager.instance.FailDungeon();
+    }
+
     #endregion
 
 

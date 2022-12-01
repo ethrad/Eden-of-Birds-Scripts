@@ -5,6 +5,7 @@ using UnityEngine.UI;
 
 public class ItemSlotController : MonoBehaviour
 {
+    public GameObject itemImage;
     public GameObject countText;
     string itemName;
     public bool isClickable;
@@ -13,7 +14,7 @@ public class ItemSlotController : MonoBehaviour
     {
         this.itemName = name;
         // 이미지 바꾸기
-        GetComponent<Image>().sprite = Resources.Load<Sprite>("Dots/Tycoon/" + name);
+        itemImage.GetComponent<Image>().sprite = Resources.Load<Sprite>("Dots/Tycoon/" + name);
         countText.GetComponent<Text>().text = count.ToString();
     }
     public void OnItemSlotClicked()

@@ -8,8 +8,8 @@ public class EaglePanel : MonoBehaviour
 {
     public void OnSpeechBalloonClicked()
     {
-        gameObject.SetActive(true);
         Initialize();
+        gameObject.SetActive(true);
     }
 
     public GameObject dungeonContinueButton;

@@ -46,7 +46,6 @@ public class BeforeBowlController : MonoBehaviour, IPointerClickHandler
     {
         if (isEmpty == true)
         {
-            // 골드 소모 부분 추가해야함
             if (ItemManager.instance.inventory.ContainsKey(ingredientName))
             {
                 ItemManager.instance.inventory[ingredientName]++;
@@ -58,6 +57,7 @@ public class BeforeBowlController : MonoBehaviour, IPointerClickHandler
 
             GameObject tempText = Instantiate(TycoonManager.instance.goldMinusUI);
             tempText.GetComponent<Text>().text = "-" + gold + " G";
+            ItemManager.instance.gold -= gold;
             tempText.transform.SetParent(transform);
             tempText.GetComponent<RectTransform>().anchoredPosition = new Vector2(0, 0);
             tempText.transform.SetParent(transform.parent);

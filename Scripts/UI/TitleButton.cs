@@ -7,6 +7,13 @@ public class TitleButton : MonoBehaviour
 {
     public void OnStartButtonClicked()
     {
-        SceneManager.LoadScene("Town");
+        if (IOManager.instance.playerSettings.isTutorialCleared == true)
+        {
+            SceneManager.LoadScene("Town");
+        }
+        else
+        {
+            SceneManager.LoadScene("Tutorial");
+        }
     }
 }

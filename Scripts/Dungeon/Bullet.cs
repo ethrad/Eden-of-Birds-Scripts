@@ -8,6 +8,7 @@ public class Bullet : MonoBehaviour
     public int damage;
     public string targetTag;
     public string poolingObjectName;
+    public float destroyTime;
 
     public virtual void OnTriggerEnter2D(Collider2D col)
     {
@@ -24,7 +25,7 @@ public class Bullet : MonoBehaviour
 
     public IEnumerator DestroySelf()
     {
-        yield return new WaitForSeconds(5f);
+        yield return new WaitForSeconds(destroyTime);
         DungeonManager.instance.ReturnObject(poolingObjectName, this.gameObject);
         
         yield return null;

@@ -76,6 +76,6 @@ public class RoomController : MonoBehaviour
         SpawnMonster();
         SpawnPlayer();
 
-        DungeonManager.instance.virtualCamera.GetComponent<CinemachineConfiner>().m_BoundingShape2D = bound.GetComponent<CompositeCollider2D>();
+        DungeonManager.instance.virtualCamera.GetComponent<CinemachineConfiner>().m_BoundingShape2D = bound.GetComponent<Collider2D>();
     }
 }

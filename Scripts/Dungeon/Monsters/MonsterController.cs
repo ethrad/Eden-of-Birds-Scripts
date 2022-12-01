@@ -79,8 +79,6 @@ public class MonsterController : MonoBehaviour
         anim.SetBool("Idle", true);
     }
 
-
-
     Vector3 dir;
 
     protected IEnumerator TurnWalk()
@@ -90,6 +88,7 @@ public class MonsterController : MonoBehaviour
         if (state == State.Idle)
         {
             dir = Random.insideUnitCircle.normalized;
+            dir = dir.normalized;
             state = State.Walk;
             StartCoroutine(TurnIdle());
             yield return null;
@@ -106,6 +105,10 @@ public class MonsterController : MonoBehaviour
         {
             transform.position += dir * Time.deltaTime * moveSpeed;
 
+            if (transform.GetChild(0) != null)
+            {
+                transform.GetChild(0).localPosition = Vector3.zero;
+            }
             anim.SetFloat("MoveX", dir.x);
             anim.SetBool("Idle", false);
         }
@@ -134,6 +137,7 @@ public class MonsterController : MonoBehaviour
         if (state == State.Idle)
         {
             dir = Random.insideUnitCircle;
+            dir = dir.normalized;
             state = State.Walk;
             yield return null;
         }
@@ -161,6 +165,7 @@ public class MonsterController : MonoBehaviour
 
     protected virtual void Attack()
     {
+        canWalk = false;
         if (canAttack == true)
         {
             StartCoroutine(AttackDelay());
@@ -257,8 +262,6 @@ public class MonsterController : MonoBehaviour
     protected virtual void Dead()
     {
         int random = Random.Range(0, 100);
-
-        Debug.Log(random);
 
         int itemIndex = -1;
         int tempProb = 0;

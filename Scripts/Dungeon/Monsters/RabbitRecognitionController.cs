@@ -27,6 +27,6 @@ public class RabbitRecognitionController : MonoBehaviour
     void Awake()
     {
         Monster = gameObject.transform.parent.transform.gameObject;
+        transform.position = Monster.transform.position;
     }
-    
 }

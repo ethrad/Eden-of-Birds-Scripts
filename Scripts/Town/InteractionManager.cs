@@ -8,6 +8,8 @@ public class InteractionManager : MonoBehaviour, IPointerClickHandler
 {
     public static InteractionManager instance;
 
+    #region interact
+
     bool canClick = false;
     [HideInInspector]
     public string residentName;
@@ -40,6 +42,15 @@ public class InteractionManager : MonoBehaviour, IPointerClickHandler
         }
     }
 
+    #endregion
+
+    public Dictionary<string, List<string>> dialogues;
+    
+    void ReadDialogues()
+    {
+        dialogues = IOManager.instance.ReadJson<Dictionary<string, List<string>>>("Dialogues");
+    }
+
     void Awake()
     {
         if (instance == null)
@@ -51,5 +62,7 @@ public class InteractionManager : MonoBehaviour, IPointerClickHandler
             if (instance != this)
                 Destroy(this.gameObject);
         }
+
+        ReadDialogues();
     }
 }
