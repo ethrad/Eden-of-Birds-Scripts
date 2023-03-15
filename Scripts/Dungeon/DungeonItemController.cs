@@ -10,14 +10,7 @@ public class DungeonItemController : MonoBehaviour
     {
         if (col.gameObject.tag == "player")
         {
-            if (DungeonManager.instance.tempInventory.ContainsKey(itemName))
-            {
-                DungeonManager.instance.tempInventory[itemName]++;
-            }
-            else
-            {
-                DungeonManager.instance.tempInventory[itemName] = 1;
-            }
+            DungeonManager.instance.GetItem(itemName);
 
             Destroy(this.gameObject);
         }

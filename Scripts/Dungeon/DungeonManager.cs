@@ -1,12 +1,15 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class DungeonManager : MonoBehaviour
 {
     public static DungeonManager instance;
 
     public Dictionary<string, int> tempInventory = new Dictionary<string, int>();
+
+    public AudioSource audioSource;
 
     #region Object Pooling
     public GameObject player;
@@ -129,6 +132,7 @@ public class DungeonManager : MonoBehaviour
 
     #endregion
 
+    #region Clear and Fail
 
     public GameObject dungeonEndPanel;
     public GameObject dungeonFailPanel;
@@ -150,6 +154,97 @@ public class DungeonManager : MonoBehaviour
         dungeonFailPanel.SetActive(true);
     }
 
+    #endregion
+
+    #region Harvest
+
+    public GameObject harvestButton;
+    GameObject currentCrop;
+
+    public void OnHarvestButton(GameObject crop)
+    {
+        currentCrop = crop;
+        harvestButton.SetActive(true);
+    }
+
+    public void OnHarvestButtonClicked()
+    {
+        isCrop = true;
+        currentCrop.GetComponent<CropController>().Harvest();
+
+        OffHarvestButton();
+    }
+
+    public void OffHarvestButton()
+    {
+        harvestButton.SetActive(false);
+    }
+
+
+    #endregion
+
+    #region Get Item
+
+    public GameObject itemImage;
+    public GameObject itemNumText;
+    public AudioClip audioItem;
+    public AudioClip audioCrop;
+    bool isCrop = false;
+
+    bool isUIActive = false;
+
+    public void GetItem(string itemName)
+    {
+        if (tempInventory.ContainsKey(itemName))
+        {
+            tempInventory[itemName]++;
+        }
+        else
+        {
+            tempInventory[itemName] = 1;
+        }
+
+        StartCoroutine(CountGetItemUI(itemName));
+    }
+
+    IEnumerator CountGetItemUI(string itemName)
+    {
+        if (isUIActive == true)
+        {
+            itemImage.SetActive(false);
+            itemNumText.SetActive(false);
+
+            yield return new WaitForSeconds(0.2f);
+        }
+
+        itemImage.GetComponent<Image>().sprite = Resources.Load<Sprite>("Dots/Items/" + itemName);
+        itemImage.SetActive(true);
+        itemNumText.SetActive(true);
+
+        if (isCrop == true)
+        {
+            audioSource.clip = audioCrop;
+        }
+        else
+        {
+            audioSource.clip = audioItem;
+        }
+
+        audioSource.Play();
+
+        isUIActive = true;
+
+        yield return new WaitForSeconds(2f);
+
+        itemImage.SetActive(false);
+        itemNumText.SetActive(false);
+        isUIActive = false;
+    }
+
+
+    #endregion
+
+
     void Awake()
     {
         if (instance == null)
@@ -164,5 +259,7 @@ public class DungeonManager : MonoBehaviour
 
         InitializeObject(20);
         SelectRoom();
+
+        this.audioSource = GetComponent<AudioSource>();
     }
 }

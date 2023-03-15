@@ -30,6 +30,9 @@ public class CookerController : MonoBehaviour, IDropHandler
 
     IEnumerator Cooking()
     {
+        audioSource.clip = cookingSound;
+        audioSource.Play();
+
         if (isShaker == true)
         {
             GetComponent<Image>().color = new Color(1, 1, 1, 0f);
@@ -55,5 +58,14 @@ public class CookerController : MonoBehaviour, IDropHandler
         }
 
         yield return null;
+    }
+
+
+    AudioSource audioSource;
+    public AudioClip cookingSound;
+
+    void Start()
+    {
+        this.audioSource = GetComponent<AudioSource>();
     }
 }

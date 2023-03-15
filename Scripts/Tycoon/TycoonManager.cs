@@ -19,18 +19,12 @@ public class IngredientSequence
 [System.Serializable]
 public class Menu
 {
+    public int grade;
     public int gold;
-    public List<int> serveRange;
     public float waitingTime;
+    public List<string> properties;
     public string koreanName;
     public List<IngredientSequence> ingredientSequences;
-}
-
-[System.Serializable]
-public class SpecialResident
-{
-    public float waitingTime;
-    public string favoriteFood;
 }
 
 [System.Serializable]
@@ -38,19 +32,15 @@ public class Order
 {
     public string residentName;
     public float waitingTime;
-    public List<string> menuList = new List<string>();
-
-    public Order(string name)
-    {
-        residentName = name;
-    }
-
-    public Order(string name, SpecialResident sr)
-    {
-        residentName = name;
-        menuList.Add(sr.favoriteFood);
-    }
+    public bool isSpecial;
 }
+
+[System.Serializable]
+public class NormalOrder : Order
+{
+    public List<string> menuList = new List<string>();
+}
+
 
 public class TycoonManager : MonoBehaviour
 {
@@ -61,34 +51,29 @@ public class TycoonManager : MonoBehaviour
     public GameObject goldMinusUI;
 
     public Dictionary<string, Menu> menus;
-    public Dictionary<string, SpecialResident> specialResidents;
 
     #region read json
+    
     void ReadRecipes()
     {
         menus = IOManager.instance.ReadJson<Dictionary<string, Menu>>("Tycoon/Menus");
     }
 
-    void ReadspecialResidents()
-    {
-        specialResidents = IOManager.instance.ReadJson<Dictionary<string, SpecialResident>>("Tycoon/SpecialResidentList");
-    }
-
     #endregion
 
     #region decide order
+    
     int specialResidentCount = 0;
 
     Dictionary<string, int> menuSalesVolumes = new Dictionary<string, int>();
     int menuWholeVolume = 0;
-    int savedWholeVolume;
 
     [HideInInspector]
     public List<Order> orderList = new List<Order>();
 
     void DecideSpecialResidentCount()
     {
-        int random = Random.Range(0, 100);
+        int random = 100; // 테스트용 Random.Range(0, 100);
 
         if (random < 10)
             specialResidentCount = 0;
@@ -102,64 +87,106 @@ public class TycoonManager : MonoBehaviour
 
     void DecideSalesVolume()
     {
-        int random = 0;
-        Menu currentMenu;
+        menuWholeVolume = 0;
 
-        foreach (KeyValuePair<string, Menu> menu in menus)
+        int range1;
+        int range2;
+        int range3;
+
+        if (GameManager.instance.ownRecipes.hasThirdGradeRecipe)
         {
-            currentMenu = menu.Value;
-            random = Random.Range(currentMenu.serveRange[0], currentMenu.serveRange[1] + 1);
-            menuSalesVolumes.Add(menu.Key, random);
-            menuWholeVolume += random;
+            range1 = Random.Range(7, 9);
+            range2 = 6;
+            range3 = Random.Range(1, 3);
+        }
+        else
+        {
+            range1 = Random.Range(8, 10);
+            range2 = Random.Range(6, 8);
+            range3 = 0;
         }
 
-        savedWholeVolume += menuWholeVolume;
+        menuWholeVolume = range1 + range2 + range3;
+        
+        
+        var tempList = GameManager.instance.menuOfTheMonth.firstGradeRecipe;
+
+        menuSalesVolumes[tempList[0]] = range1 / 2;
+        menuSalesVolumes[tempList[0]] += range1 % 2;
+            
+        menuSalesVolumes[tempList[1]] = range1 / 2;
+        
+        if (GameManager.instance.ownRecipes.hasThirdGradeRecipe)
+        {
+            tempList = GameManager.instance.menuOfTheMonth.secondGradeRecipe;
+            
+            menuSalesVolumes[tempList[0]] = range2;
+            
+            tempList = GameManager.instance.menuOfTheMonth.thirdGradeRecipe;
+            
+            menuSalesVolumes[tempList[0]] = range3;
+        }
+        else
+        {
+            tempList = GameManager.instance.menuOfTheMonth.secondGradeRecipe;
+            
+            menuSalesVolumes[tempList[0]] = range2 / 2;
+            menuSalesVolumes[tempList[0]] += range2 % 2;
+            
+            menuSalesVolumes[tempList[1]] = range2 / 2;
+        }
+
+
+        /*foreach (KeyValuePair<string, Menu> menu in menus)
+        {
+            menuSalesVolumes.Add(menu.Key, menuVolume);
+        }*/
+
+        /*  for (int i = 0; i < menuWholeVolume % menus.Count; i++)
+          {
+              int random = Random.Range(0, menus.Count);
+
+              // 이번 주에 선택된 메뉴 리스트를 따로 만들어서 거기다 넣어야 할 듯
+          }*/
     }
 
-    void SpecialResidentsTakeMenus()
+    // 특수주민 대기시간은 40초
+    void SelectSpecialResidents()
     {
+        List<string> residentNames = new List<string>();
+
+        for (int i = 0; i < GameManager.instance.specialResidentInfo.Count; i++)
+        {
+            residentNames.Add(GameManager.instance.specialResidentInfo.ElementAt(i).Key);
+        }
+
         for (int i = 0; i < specialResidentCount; i++)
         {
-            int specialResidentID = Random.Range(0, specialResidents.Count);
-            SpecialResident tempResident = specialResidents.ElementAt(specialResidentID).Value;
-            Order tempOrder1 = new Order(specialResidents.ElementAt(specialResidentID).Key, tempResident);
-            tempOrder1.waitingTime += menus[tempResident.favoriteFood].waitingTime;
-
-            menuSalesVolumes[tempResident.favoriteFood]--;
-            menuWholeVolume--;
-
-
-            // �ٸ� �޴� ����
-            int random = Random.Range(0, 3);
-            for (int j = 0; j < random; j++)
-            {
-                int menuID = Random.Range(0, menus.Count);
-                string menuName = menus.ElementAt(menuID).Key;
-                tempOrder1.menuList.Add(menuName);
-                tempOrder1.waitingTime += menus[menuName].waitingTime;
-
-                menuSalesVolumes[menuName]--;
-                menuWholeVolume--;
-            }
+            int specialResidentID = Random.Range(0, residentNames.Count);
+            Order tempOrder1 = new Order();
+            tempOrder1.residentName = residentNames[specialResidentID];
+            tempOrder1.isSpecial = true;
+            tempOrder1.waitingTime = 40.0f;
 
             orderList.Add(tempOrder1);
-            specialResidents.Remove(specialResidents.ElementAt(specialResidentID).Key);
-            //DialogueManager.instance.ReadSpecialResidentDialogues(temp.residentName);
+            residentNames.RemoveAt(specialResidentID);
         }
     }
 
     void NormalResidentsTakeMenus()
     {
-        while (menuWholeVolume > 3)
+        while (menuWholeVolume > 2)
         {
-            Order tempOrder1 = new Order("normal");
+            NormalOrder tempOrder1 = new NormalOrder();
+            tempOrder1.residentName = "Normal";
 
-            int menuCount = Random.Range(1, 4);
+            int menuCount = Random.Range(1, 3);
 
+            // 여기를 수정해야해요
             for (int i = 0; i < menuCount; i++)
             {
-                int menuID = Random.Range(0, menus.Count);
-                string menuName = menus.ElementAt(menuID).Key;
+                int menuID = Random.Range(0, menuSalesVolumes.Count);
+                string menuName = menuSalesVolumes.ElementAt(menuID).Key;
 
                 if (menuSalesVolumes[menuName] > 0)
                 {
@@ -192,17 +219,17 @@ public class TycoonManager : MonoBehaviour
 
         if (menuWholeVolume > 0)
         {
-            Order tempOrder2 = new Order("normal");
-            foreach (KeyValuePair<string, Menu> menu in menus)
+            NormalOrder tempOrder2 = new NormalOrder();
+            tempOrder2.residentName = "Normal";
+
+            foreach (KeyValuePair<string, int> menu in menuSalesVolumes)
             {
                 string menuName = menu.Key;
 
-                while (menuSalesVolumes[menuName] > 0)
+                for (int i = 0; i < menu.Value; i++)
                 {
                     tempOrder2.menuList.Add(menuName);
-                    menuSalesVolumes[menuName]--;
                 }
-
             }
         }
     }
@@ -230,7 +257,7 @@ public class TycoonManager : MonoBehaviour
     }
     #endregion
 
-    #region tycoon info and end tycoon
+    #region show tycoon info and end tycoon
     
     [HideInInspector]
     public int earnedGold = 0;
@@ -285,10 +312,9 @@ public class TycoonManager : MonoBehaviour
         }
 
         ReadRecipes();
-        ReadspecialResidents();
         DecideSpecialResidentCount();
         DecideSalesVolume();
-        SpecialResidentsTakeMenus();
+        SelectSpecialResidents();
         NormalResidentsTakeMenus();
     }
 }

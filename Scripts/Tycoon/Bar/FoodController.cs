@@ -19,7 +19,7 @@ public class FoodController : MonoBehaviour, IBeginDragHandler, IEndDragHandler,
 
     public void ResetPlate()
     {
-        BarPlateManager.instance.ResetPlate(plateIndex);
+        BarManager.instance.ResetPlate(plateIndex);
     }
 
     void IBeginDragHandler.OnBeginDrag(PointerEventData eventData)

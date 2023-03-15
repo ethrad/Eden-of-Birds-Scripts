@@ -1,7 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using System.IO;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
@@ -9,9 +8,10 @@ public class BarManager : MonoBehaviour
 {
     public static BarManager instance;
 
+    public GameObject normalSeatPrefab;
+    public GameObject specialSeatPrefab;
+    
     public GameObject[] seats;
-    //public GameObject[] orderBalloons;
-    //public Order[] orders = new Order[3];
 
     public float resetDelay;
 
@@ -26,12 +26,72 @@ public class BarManager : MonoBehaviour
             int orderID = Random.Range(0, TycoonManager.instance.orderList.Count);
             Order tempOrder = TycoonManager.instance.orderList[orderID];
 
-            seats[seatID].GetComponent<SeatController>().UpdateSeat(tempOrder);
-            seats[seatID].GetComponent<SeatController>().seatID = seatID;
+            GameObject tempSeat;
+            
+            if (tempOrder.isSpecial == true)
+            {
+                tempSeat = Instantiate(specialSeatPrefab);
+            }
+            else
+            {
+                tempSeat = Instantiate(normalSeatPrefab);
+            }
+            
+            tempSeat.transform.SetParent(seats[seatID].transform);
+            tempSeat.transform.localPosition = Vector3.zero;
+            tempSeat.GetComponent<SeatController>().UpdateSeat(tempOrder);
+            tempSeat.GetComponent<SeatController>().seatID = seatID;
 
             TycoonManager.instance.orderList.RemoveAt(orderID);
         }
     }
+
+    #region Manage Plates
+
+    public GameObject foodPrefab;
+    public GameObject[] plates;
+    public string[] foodNames = new string[5];
+
+    public bool GetServed(string recipeName)
+    {
+        bool fullFlag = false;
+
+        for (int i = 0; i < 5; i++)
+        {
+            if (foodNames[i] == "")
+            {
+                fullFlag = false;
+                foodNames[i] = recipeName;
+                StartCoroutine(Plating(i));
+                break;
+            }
+            fullFlag = true;
+        }
+
+        if (fullFlag == true)
+        {
+            return false;
+        }
+
+        return true;
+    }
+
+    IEnumerator Plating(int plateIndex)
+    {
+        yield return new WaitForSeconds(2.5f);
+
+        GameObject tempFood = Instantiate(foodPrefab, plates[plateIndex].transform);
+        tempFood.GetComponent<FoodController>().UpdateFood(plateIndex, foodNames[plateIndex]);
+        tempFood.transform.SetParent(plates[plateIndex].transform);
+    }
+
+    public void ResetPlate(int plateIndex)
+    {
+        foodNames[plateIndex] = "";
+    }
+
+    #endregion
+
 
     void Awake()
     {

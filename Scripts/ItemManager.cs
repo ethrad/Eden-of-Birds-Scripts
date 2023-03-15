@@ -16,8 +16,8 @@ public class ItemManager : MonoBehaviour
 
     public int gold
     {
-        get { return _gold; }    // _data ¹ÝÈ¯
-        set { _gold = value; }   // value Å°¿öµå »ç¿ë
+        get { return _gold; }    // _data ë°˜í™˜
+        set { _gold = value; }   // value í‚¤ì›Œë“œ ì‚¬ìš©
     }
 
     public Dictionary<string, ItemInfo> itemList;

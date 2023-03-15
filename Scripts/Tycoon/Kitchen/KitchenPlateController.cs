@@ -36,8 +36,15 @@ public class KitchenPlateController : MonoBehaviour, IDropHandler
         }
     }
 
+
+    AudioSource audioSource;
+    public AudioClip ringingSound;
+
     public void OnServiceBellClicked()
     {
+        audioSource.clip = ringingSound;
+        audioSource.Play();
+
         if (hasFood == true)
         {
             StartCoroutine(ServeToBar(recipeName));
@@ -88,11 +95,11 @@ public class KitchenPlateController : MonoBehaviour, IDropHandler
                 resultFoodImage.GetComponent<Image>().sprite = Resources.Load<Sprite>("Dots/Tycoon/failedFood");
                 resultFoodImage.SetActive(true);
 
-                if (IOManager.instance.playerSettings.isTutorialCleared == false)
-                {
-                    KitchenTycoonTutorial.instance.foodName = "¸À¾ø´Â ¾²·¹±â";
-                    KitchenTycoonTutorial.instance.CompleteFood();
-                }
+                /*                if (IOManager.instance.playerSettings.isTutorialCleared == false)
+                                {
+                                    KitchenTycoonTutorial.instance.foodName = "¸À¾ø´Â ¾²·¹±â";
+                                    KitchenTycoonTutorial.instance.CompleteFood();
+                                }*/
 
                 StartCoroutine(ThrowAway());
             }
@@ -102,27 +109,24 @@ public class KitchenPlateController : MonoBehaviour, IDropHandler
                 resultFoodImage.SetActive(true);
                 StartCoroutine(ServeToBar(recipeName));
 
-                if (IOManager.instance.playerSettings.isTutorialCleared == false)
+               /* if (IOManager.instance.playerSettings.isTutorialCleared == false)
                 {
                     KitchenTycoonTutorial.instance.foodName = "¸ÀÀÖ´Â " + TycoonManager.instance.menus[recipeName].koreanName;
                     Debug.Log(TycoonManager.instance.menus[recipeName].koreanName);
                     KitchenTycoonTutorial.instance.CompleteFood();
-                }
+                }*/
             }
 
             ingredients.Clear();
 
         }
-
-
-
     }
 
     public float parrotHandSpeed;
 
     IEnumerator ServeToBar(string recipeName)
     {
-        bool servingResult = BarPlateManager.instance.GetServed(recipeName);
+        bool servingResult = BarManager.instance.GetServed(recipeName);
 
         if (servingResult == false)
         {
@@ -180,5 +184,10 @@ public class KitchenPlateController : MonoBehaviour, IDropHandler
         canDrop = true;
 
         yield return null;
+    }
+
+    void Start()
+    {
+        this.audioSource = GetComponent<AudioSource>();
     }
 }
