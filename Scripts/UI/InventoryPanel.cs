@@ -13,21 +13,22 @@ public class InventoryPanel : MonoBehaviour
     
     public void OnInventoryButtonClicked()
     {
-        foreach (KeyValuePair<string, int> item in ItemManager.instance.inventory)
+        foreach (KeyValuePair<string, int> item in GameManager.instance.inventory)
         {
-            GameObject tempItem = Instantiate(itemSlotPrefab);
-            tempItem.GetComponent<ItemSlotController>().UpdateItem(item.Key, item.Value);
-            tempItem.transform.SetParent(itemSlotPanel.transform);
+            if (item.Value > 0)
+            {
+                GameObject tempItem = Instantiate(itemSlotPrefab, itemSlotPanel.transform);
+                tempItem.GetComponent<ItemSlotController>().UpdateItem(item.Key, item.Value);
+            }
         }
-        goldText.GetComponent<Text>().text = ItemManager.instance.gold.ToString();
-
+        goldText.GetComponent<Text>().text = GameManager.instance.gameData.gold.ToString();
         gameObject.SetActive(true);
     }
 
     public void UpdateDescriptionPanel(string itemName)
     {
-        this.itemName.GetComponent<Text>().text = ItemManager.instance.itemList[itemName].name;
-        description.GetComponent<Text>().text = ItemManager.instance.itemList[itemName].description;
+        this.itemName.GetComponent<Text>().text = GameManager.instance.itemList[itemName].name;
+        description.GetComponent<Text>().text = GameManager.instance.itemList[itemName].description;
     }
 
     public void OnExitButtonClicked()

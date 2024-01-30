@@ -10,18 +10,18 @@ public class ItemSlotController : MonoBehaviour
     string itemName;
     public bool isClickable;
 
-    public void UpdateItem(string name, int count)
+    public void UpdateItem(string itemName, int count)
     {
-        this.itemName = name;
+        this.itemName = itemName;
         // 이미지 바꾸기
-        itemImage.GetComponent<Image>().sprite = Resources.Load<Sprite>("Dots/Tycoon/" + name);
+        itemImage.GetComponent<Image>().sprite = Resources.Load<Sprite>("Dots/Items/" + itemName);
         countText.GetComponent<Text>().text = count.ToString();
     }
     public void OnItemSlotClicked()
     {
         transform.parent.parent.GetComponent<InventoryPanel>().UpdateDescriptionPanel(itemName);
     }
-
+    
     void Start()
     {
         if (isClickable == true)

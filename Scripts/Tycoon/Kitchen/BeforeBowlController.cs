@@ -1,81 +1,73 @@
 using System.Collections;
 using System.Collections.Generic;
+using Tycoon;
 using UnityEngine;
 using UnityEngine.UI;
-using UnityEngine.EventSystems;
 
-public class BeforeBowlController : MonoBehaviour, IPointerClickHandler
+namespace Tycoon
 {
-    public string ingredientName;
-    public int gold;
-    public GameObject backgroundImage;
-
-    GameObject ingredientPrefab;
-
-    bool isEmpty = false;
-
-    public void UpdateBowl()
+    public class BeforeBowlController : MonoBehaviour
     {
-        int count;
+        public string ingredientName;
+        public int price;
+        public GameObject backgroundImage;
+        public GameObject goldMinusUI;
 
-        if (ItemManager.instance.inventory.ContainsKey(ingredientName))
-        {
-            count = ItemManager.instance.inventory[ingredientName];
-        }
-        else
-        {
-            count = 0;
-        }
+        GameObject ingredientPrefab;
 
-        if (count <= 1)
-        {
-            backgroundImage.GetComponent<Image>().color = new Color(0.65f, 0.65f, 0.65f, 0.5f);
-        }
-        if (count == 0)
-        {
-            isEmpty = true;
-            return;
-        }
+        private bool isEmpty = false;
 
-        GameObject tempIngredient = Instantiate(ingredientPrefab, this.transform);
-        tempIngredient.transform.SetParent(this.gameObject.transform);
-        tempIngredient.GetComponent<IngredientController>().Initialize(ingredientName);
-    }
-
-    public void OnPointerClick(PointerEventData pointerEventData)
-    {
-        if (isEmpty == true)
+        public void UpdateBowl()
         {
-            if (ItemManager.instance.inventory.ContainsKey(ingredientName))
+            int count;
+
+            if (GameManager.instance.inventory.ContainsKey(ingredientName))
             {
-                ItemManager.instance.inventory[ingredientName]++;
+                count = GameManager.instance.inventory[ingredientName];
             }
             else
             {
-                ItemManager.instance.inventory[ingredientName] = 1;
+                count = 0;
             }
 
-            GameObject tempText = Instantiate(TycoonManager.instance.goldMinusUI);
-            tempText.GetComponent<Text>().text = "-" + gold + " G";
-            ItemManager.instance.gold -= gold;
-            tempText.transform.SetParent(transform);
-            tempText.GetComponent<RectTransform>().anchoredPosition = new Vector2(0, 0);
-            tempText.transform.SetParent(transform.parent);
+            if (count <= 1)
+            {
+                backgroundImage.GetComponent<Image>().color = new Color(0.65f, 0.65f, 0.65f, 0.5f);
+            }
+            if (count == 0)
+            {
+                isEmpty = true;
+                return;
+            }
 
-            isEmpty = false;
-            UpdateBowl();
+            GameObject tempIngredient = Instantiate(ingredientPrefab, transform);
+            tempIngredient.GetComponent<IngredientController>().Initialize(ingredientName);
         }
-    }
 
-    void Initialize()
-    {
-        ingredientPrefab = Resources.Load("Prefabs/Tycoon/DefaultIngredient") as GameObject;
-        backgroundImage.GetComponent<Image>().sprite = Resources.Load<Sprite>("Dots/Tycoon/" + ingredientName);
-    }
+        public void OnBowlClicked()
+        {
+            if (isEmpty && GameManager.instance.gameData.PurchaseGold(price))
+            {
+                GameManager.instance.AddItemToInventory(ingredientName, 1);
 
-    void Start()
-    {
-        Initialize();
-        UpdateBowl();
+                isEmpty = false;
+                UpdateBowl();
+
+                TycoonManager.instance.loss += price;
+                GameObject tempText = Instantiate(goldMinusUI, transform);
+                tempText.GetComponent<Text>().text = "-" + price + " G";
+
+                tempText.GetComponent<RectTransform>().anchoredPosition = new Vector2(0, 16f);
+            }
+        }
+
+        public void Initialize(GameObject ingredientPrefab, string ingredientName, int price)
+        {
+            this.ingredientPrefab = ingredientPrefab;
+            this.ingredientName = ingredientName;
+            this.price = price;
+            backgroundImage.GetComponent<Image>().sprite = Resources.Load<Sprite>("Dots/Items/" + ingredientName);
+        }
+
     }
 }

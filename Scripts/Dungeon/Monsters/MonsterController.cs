@@ -1,39 +1,50 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class MonsterController : MonoBehaviour
 {
-    // Monster State °ü¸®
+    // Monster State ê´€ë¦¬
     public enum State { Idle, Walk, Follow, Attack, Dead };
     protected enum DamagedState { Idle, Damaged };
 
     public State state;
     protected DamagedState damagedState;
 
-    protected GameObject target; // ÇÃ·¹ÀÌ¾î
+    protected GameObject target; // í”Œë ˆì´ì–´
 
-    public int maxHP; // ÃÖ´ë Ã¼·Â
-    protected int HP; // ÇöÀç Ã¼·Â
-    public int ATK; // °ø°İ·Â
-    public float attackDelay; // °ø°İ¼Óµµ
+    public int[] maxHPArr; // ìµœëŒ€ ì²´ë ¥
+    protected int maxHP;
+    protected int HP; // í˜„ì¬ ì²´ë ¥
 
-    public float moveSpeed; // ÀÌµ¿ ¼Óµµ
+    public int[] ATKArr;
+    protected int ATK; // ê³µê²©ë ¥
+    public float attackDelay; // ê³µê²©ì†ë„
 
-    // ¾Ö´Ï¸ŞÀÌ¼Ç
+    Vector3 dir; // ì´ë™ ë°©í–¥
+    public float moveSpeed; // ì´ë™ ì†ë„
+    public bool isFixed; // ê³ ì •ëœ ëª¬ìŠ¤í„°ì¸ì§€
+
+    // ì• ë‹ˆë©”ì´ì…˜
     protected Animator anim;
+    
+    protected AudioSource audioSource;
+    public AudioClip audioDamaged;
+    public AudioClip audioAttack;
+    public AudioClip audioDead;
 
-    bool canWalk = true;
+    protected bool canWalk = true;
 
 
     #region collider
-    // ¾ÈÂÊ Äİ¶óÀÌ´õ
+    // ì•ˆìª½ ì½œë¼ì´ë”
 
-    bool isPlayerInAttackArea = false;
+    protected bool isPlayerInAttackArea = false;
 
     protected virtual void OnTriggerEnter2D(Collider2D col)
     {
-        if (col.gameObject.tag == "player")
+        if (col.gameObject.CompareTag("player"))
         {
             isPlayerInAttackArea = true;
             state = State.Attack;
@@ -42,7 +53,7 @@ public class MonsterController : MonoBehaviour
 
     protected virtual void OnTriggerExit2D(Collider2D col)
     {
-        if (col.gameObject.tag == "player")
+        if (col.gameObject.CompareTag("player"))
         {
             isPlayerInAttackArea = false;
             state = State.Follow;
@@ -52,11 +63,11 @@ public class MonsterController : MonoBehaviour
 
     protected virtual void OnCollisionEnter2D(Collision2D col)
     {
-        if (col.gameObject.tag == "Wall")
+        if (col.gameObject.CompareTag("Wall"))
         {
             state = State.Idle;
         }
-        if (col.gameObject.tag == "player")
+        if (col.gameObject.CompareTag("player"))
         {
             canWalk = false;
         }
@@ -64,7 +75,7 @@ public class MonsterController : MonoBehaviour
 
     protected virtual void OnCollisionExit2D(Collision2D col)
     {
-        if (col.gameObject.tag == "player")
+        if (col.gameObject.CompareTag("player"))
         {
             canWalk = true;
         }
@@ -78,9 +89,7 @@ public class MonsterController : MonoBehaviour
         StartCoroutine(TurnWalk());
         anim.SetBool("Idle", true);
     }
-
-    Vector3 dir;
-
+    
     protected IEnumerator TurnWalk()
     {
         yield return new WaitForSeconds(2f);
@@ -91,19 +100,19 @@ public class MonsterController : MonoBehaviour
             dir = dir.normalized;
             state = State.Walk;
             StartCoroutine(TurnIdle());
-            yield return null;
+            yield break;
         }
         else
         {
-            yield return null;
+            yield break;
         }
     }
 
     protected void Walk()
     {
-        if (canWalk == true)
+        if (canWalk)
         {
-            transform.position += dir * Time.deltaTime * moveSpeed;
+            transform.position += dir * (Time.fixedDeltaTime * moveSpeed);
 
             if (transform.GetChild(0) != null)
             {
@@ -121,33 +130,13 @@ public class MonsterController : MonoBehaviour
         if (state == State.Walk)
         {
             state = State.Idle;
-            yield return null;
+            yield break;
         }
         else
         {
-            yield return null;
+            yield break;
         }
     }
-
-
-    protected IEnumerator Think()
-    {
-        yield return new WaitForSeconds(2f);
-
-        if (state == State.Idle)
-        {
-            dir = Random.insideUnitCircle;
-            dir = dir.normalized;
-            state = State.Walk;
-            yield return null;
-        }
-        else
-        {
-            yield return null;
-        }
-    }
-
-
 
     protected void Follow()
     {
@@ -166,101 +155,112 @@ public class MonsterController : MonoBehaviour
     protected virtual void Attack()
     {
         canWalk = false;
-        if (canAttack == true)
+        if (canAttack)
         {
+            if (isPlayerInAttackArea)
+            {
+                target.GetComponent<PlayerController>().Damaged(ATK);
+            }
+            audioSource.clip = audioAttack;
+            audioSource.Play();
+            anim.SetTrigger("Attack");
+            canAttack = false;
+            canWalk = false;
+            
             StartCoroutine(AttackDelay());
         }
-
     }
 
 
     protected IEnumerator AttackDelay()
     {
-        if (isPlayerInAttackArea == true)
-        {
-            target.GetComponent<PlayerController>().Damaged(ATK);
-        }
-        anim.SetTrigger("Attack");
-        canAttack = false;
-        canWalk = false;
         yield return new WaitForSeconds(attackDelay);
 
         canAttack = true;
         canWalk = true;
-        yield return null;
-
+        yield break;
     }
 
     #endregion
 
     #region Damaged
 
+    protected SpriteRenderer spriteRenderer;
+    public Image HPBar;
     public float damageDelay;
 
-    public void Damaged(int damage)
+    public void Damaged(GameObject bullet)
     {
         if (damagedState == DamagedState.Idle)
         {
-            HP -= damage;
+            HP -= bullet.GetComponent<Bullet>().damage;
+            HPBar.fillAmount = (float)HP / maxHP;
 
             if (HP <= 0)
             {
                 Dead();
             }
 
+            audioSource.clip = audioDamaged;
+            audioSource.Play();
+            
             damagedState = DamagedState.Damaged;
 
+            if (!isFixed)
+            {
+                StartCoroutine(Knockback(bullet));
+            }
             StartCoroutine(DamageDelay());
-            //StartCoroutine(ColorChange());
         }
 
     }
 
     IEnumerator DamageDelay()
     {
-        spriteRenderer.color = new Color32(216, 81, 255, 225);
+        spriteRenderer.color = new Color32(116, 116, 116, 225);
         yield return new WaitForSeconds(damageDelay);
 
         spriteRenderer.color = new Color32(255, 255, 255, 255);
         damagedState = DamagedState.Idle;
 
-        yield return null;
+        yield break;
     }
+    
+    public float knockbackSpeed;
+    private Vector3 knockbackDir;
+    public float knockbackTime;
 
-    //int countTime = 0;
-    public SpriteRenderer spriteRenderer;
-
-    IEnumerator ColorChange()
+    IEnumerator Knockback(GameObject bullet)
     {
-        spriteRenderer.color = new Color32(216, 81, 255, 225);
-
-        yield return new WaitForSeconds(damageDelay);
-
-        /*while (countTime < 10)
+        anim.speed = 0f;
+        
+        knockbackDir = (-dir.normalized + bullet.GetComponent<Bullet>().dir.normalized).normalized;
+        float countTime = 0;
+        
+        while (countTime < knockbackTime)
         {
-            if (countTime % 2 == 0)
-                spriteRenderer.color = new Color32(216, 81, 255, 225);
-            else
-                spriteRenderer.color = new Color32(236, 170, 255, 225);
-
-            yield return new WaitForSeconds(0.2f);
-
-            countTime++;
-        }*/
-
-        spriteRenderer.color = new Color32(255, 255, 255, 255);
-        //countTime = 0;
-        yield return null;
+            transform.position = Vector2.Lerp(transform.position, transform.position + knockbackDir, knockbackSpeed * Time.fixedDeltaTime);
+            countTime += Time.fixedDeltaTime;
+            yield return new WaitForSeconds(Time.fixedDeltaTime);
+        }
+        
+        anim.speed = 1f;
+        damagedState = DamagedState.Idle;
+        
+        yield break;
     }
     #endregion
 
 
     #region dead and drop item
-    public GameObject[] itemArray;
+    public string[] itemNames;
     public int[] itemProb;
 
     protected virtual void Dead()
     {
+        audioSource.clip = audioDead;
+        audioSource.Play();
+        
         int random = Random.Range(0, 100);
 
         int itemIndex = -1;
@@ -268,45 +268,52 @@ public class MonsterController : MonoBehaviour
 
         for (int i = 0; i < itemProb.Length; i++)
         {
-            if (random <= itemProb[i] + tempProb)
+            if (random < itemProb[i] + tempProb)
             {
                 itemIndex = i;
+                break;
             }
-            else break;
 
             tempProb += itemProb[i];
         }
 
         if (itemIndex != -1)
         {
-            Instantiate(itemArray[itemIndex], transform.position, Quaternion.Euler(0, 0, 0));
+            GameObject tempItem = Instantiate(DungeonManager.instance.dropItemPrefab, transform.position + Vector3.up * 0.06f, Quaternion.Euler(0, 0, 0));
+            tempItem.GetComponent<DungeonItemController>().Initialize(itemNames[itemIndex]);
         }
 
-        DungeonManager.instance.UpdateMonsterCount();
+        foreach (var t in gameObject.GetComponents<QuestTrigger>())
+        {
+            t.OnQuestTrigger();
+        }
+        
         Destroy(gameObject);
 
     }
 
     #endregion
 
-    // Start is called before the first frame update
     protected virtual void Start()
     {
-        target = DungeonManager.instance.player; // Å¸°ÙÀ» ÇÃ·¹ÀÌ¾î·Î ÁöÁ¤
+        target = DungeonManager.instance.player; // íƒ€ê²Ÿì„ í”Œë ˆì´ì–´ë¡œ ì§€ì •
         state = State.Idle;
         damagedState = DamagedState.Idle;
 
         anim = GetComponent<Animator>();
-
         spriteRenderer = GetComponent<SpriteRenderer>();
+        audioSource = GetComponent<AudioSource>();
+        audioSource.volume = GameManager.instance.settings.soundEffectsVolume;
 
         canAttack = true;
 
-        HP = maxHP;
+        HP = maxHP = maxHPArr[DungeonManager.instance.floor];
+        ATK = ATKArr[DungeonManager.instance.floor];
+
+        isFixed = false;
     }
 
-    // Update is called once per frame
-    protected virtual void Update()
+    protected virtual void FixedUpdate()
     {
         switch (state)
         {

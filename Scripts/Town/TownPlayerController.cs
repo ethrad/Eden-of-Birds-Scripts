@@ -4,11 +4,10 @@ using UnityEngine;
 
 public class TownPlayerController : MonoBehaviour
 {
-    // 애니메이션
     private Animator anim;
 
     #region Move
-    bool canMove;
+    public bool canMove;
     public float moveSpeed;
 
     float inputX;
@@ -17,6 +16,8 @@ public class TownPlayerController : MonoBehaviour
     bool isMoving;
 
     public GameObject Joystick;
+    private AudioSource audioWalkSource;
+    private bool isAudioWalkPlaying;
 
     void Move()
     {
@@ -26,15 +27,32 @@ public class TownPlayerController : MonoBehaviour
         if (inputX == 0 && inputY == 0)
         {
             isMoving = false;
+            audioWalkSource.Stop();
+            isAudioWalkPlaying = false;
         }
-        else isMoving = true;
+        else
+        {
+            isMoving = true;
+
+            if (!isAudioWalkPlaying)
+            {
+                audioWalkSource.Play();
+                isAudioWalkPlaying = true;
+            }
+        }
 
         dir = new Vector3(inputX, inputY, 0).normalized;
 
-        transform.position += dir * moveSpeed * Time.deltaTime;
+        transform.position += dir * (moveSpeed * Time.deltaTime);
 
         anim.SetFloat("moveX", inputX);
         anim.SetBool("isMoving", isMoving);
+    }
+
+    public void Brake()
+    {
+        Joystick.GetComponent<Joystick>().Reset();
+        dir = Vector3.zero;
     }
 
     #endregion
@@ -43,11 +61,12 @@ public class TownPlayerController : MonoBehaviour
     {
         anim = GetComponent<Animator>();
         canMove = true;
+        audioWalkSource = GetComponent<AudioSource>();
     }
 
     void FixedUpdate()
     {
-        if (canMove == true)
+        if (canMove)
         {
             Move();
         }

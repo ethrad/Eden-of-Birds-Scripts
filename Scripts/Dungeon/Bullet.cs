@@ -9,42 +9,42 @@ public class Bullet : MonoBehaviour
     public string targetTag;
     public string poolingObjectName;
     public float destroyTime;
+    
+    [HideInInspector]
+    public bool canShoot;
 
     public virtual void OnTriggerEnter2D(Collider2D col)
     {
-        if (col.gameObject.tag == "Wall" || col.gameObject.tag == "Object")
+        if (col.gameObject.CompareTag("Wall") || col.gameObject.CompareTag("Object"))
         {
-            Destroy(this.gameObject);
+            DungeonManager.instance.ReturnObject(poolingObjectName, gameObject);
         }
 
-        if (col.gameObject.tag == targetTag)
+        if (col.gameObject.CompareTag(targetTag))
         {
-            col.gameObject.GetComponent<MonsterController>().Damaged(damage);
+            col.gameObject.GetComponent<MonsterController>().Damaged(gameObject);
         }
     }
 
-    public IEnumerator DestroySelf()
+    protected virtual IEnumerator DestroySelf()
     {
         yield return new WaitForSeconds(destroyTime);
-        DungeonManager.instance.ReturnObject(poolingObjectName, this.gameObject);
+        DungeonManager.instance.ReturnObject(poolingObjectName, gameObject);
         
-        yield return null;
+        yield break;
     }
 
-
-    protected Vector3 dir;
-
-    // Start is called before the first frame update
-    public virtual void Initialize(Vector3 dir)
+    [HideInInspector]
+    public Vector3 dir;
+    
+    public virtual void Initialize(Vector3 pos)
     {
-        this.dir = DungeonManager.instance.player.transform.position - transform.position;
-        this.dir = this.dir.normalized;
+        transform.position = pos;
         StartCoroutine(DestroySelf());
     }
-
-    // Update is called once per frame
-    void Update()
+    
+    protected virtual void FixedUpdate()
     {
-        transform.Translate(dir * moveSpeed * Time.deltaTime);
+        transform.Translate(dir * (moveSpeed * Time.fixedDeltaTime));
     }
 }

@@ -1,10 +1,25 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 using UnityEngine.EventSystems;
 
-public class TrashBinController : MonoBehaviour, IDropHandler
+public class TrashBinController : MonoBehaviour, IDropHandler, IPointerEnterHandler, IPointerExitHandler
 {
+    public Sprite closedTrashBin;
+    public Sprite openedTrashBin;
+    private Image image;
+    
+    public void OnPointerEnter(PointerEventData eventData)
+    {
+        image.sprite = openedTrashBin;
+    }
+    
+    public void OnPointerExit(PointerEventData eventData)
+    {
+        image.sprite = closedTrashBin;
+    }
+    
     public void OnDrop(PointerEventData eventData)
     {
         if (eventData.pointerDrag.GetComponent<IngredientController>().ingredientState == IngredientController.IngredientState.Idle)
@@ -24,6 +39,10 @@ public class TrashBinController : MonoBehaviour, IDropHandler
 
     void Start()
     {
-        this.audioSource = GetComponent<AudioSource>();
+        audioSource = GetComponent<AudioSource>();
+        audioSource.volume = GameManager.instance.settings.soundEffectsVolume;
+        
+        image = GetComponent<Image>();
     }
+
 }

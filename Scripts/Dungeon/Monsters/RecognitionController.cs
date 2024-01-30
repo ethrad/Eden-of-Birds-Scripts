@@ -8,7 +8,7 @@ public class RecognitionController : MonoBehaviour
 
     void OnTriggerEnter2D(Collider2D col)
     {
-        if (col.gameObject.tag == "player")
+        if (col.gameObject.CompareTag("player"))
         {
             Monster.GetComponent<MonsterController>().state = MonsterController.State.Follow;
         }
@@ -16,7 +16,7 @@ public class RecognitionController : MonoBehaviour
 
     void OnTriggerExit2D(Collider2D col)
     {
-        if (col.gameObject.tag == "player")
+        if (col.gameObject.CompareTag("player"))
         {
             Monster.GetComponent<MonsterController>().state = MonsterController.State.Idle;
         }

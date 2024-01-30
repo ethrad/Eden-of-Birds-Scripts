@@ -4,85 +4,96 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-public class SeatController : MonoBehaviour, IDropHandler
+namespace Tycoon
 {
-    public GameObject characterImage;
-
-    public GameObject orderBalloon;
-
-    public GameObject angryImg;
-    
-    protected AudioSource audioSource;
-    public AudioClip audioEnter;
-    
-    [HideInInspector]
-    public int seatID;
-    
-    public virtual void OnDrop(PointerEventData eventData)
+    public class SeatController : MonoBehaviour, IDropHandler
     {
-        
-    }
+        public GameObject characterImage;
 
-    public void FailedOrder()
-    {
-        StopCoroutine(UpdateTimeBar());
-        orderBalloon.SetActive(false);
-        angryImg.SetActive(true);
-        TycoonManager.instance.ActivateAngryUI(seatID);
-        StartCoroutine(ResetSeat());
-    }
+        public GameObject orderBalloon;
 
-    public virtual void UpdateSeat(Order order)
-    {
-        
-    }
+        public GameObject angryImg;
 
-    protected IEnumerator ResetSeat()
-    {
-        yield return new WaitForSeconds(BarManager.instance.resetDelay);
-        
-        gameObject.SetActive(false);
-        BarManager.instance.UpdateSeat(seatID);
-        Destroy(this.gameObject);
+        protected AudioSource audioSource;
+        public AudioClip audioEnter;
 
-        yield return null;
-    }
-    
-    
-    #region Order Balloon
+        [HideInInspector]
+        public int seatID;
 
-    public Image timeBar;
+        protected bool canServe;
 
-    protected float timeLimit;
-    protected float currentTime;
-    
-    public virtual void UpdateBalloon()
-    {
-        //timeLimit = order.waitingTime;
-        currentTime = timeLimit;
-        StartCoroutine(UpdateTimeBar());
-    }
-    
-    protected IEnumerator UpdateTimeBar()
-    {
-        while (currentTime > 0)
+        public virtual void OnDrop(PointerEventData eventData)
         {
-            currentTime -= 0.1f;
-            timeBar.fillAmount = currentTime / timeLimit;
 
-            yield return new WaitForSeconds(0.1f);
         }
 
-        FailedOrder();
+        public virtual void UpdateSeat(Order order)
+        {
 
-        yield return null;
-    }
-    
-    #endregion
+        }
 
-    
-    void Awake()
-    {
-        this.audioSource = GetComponent<AudioSource>();
+        protected IEnumerator ResetSeat()
+        {
+            yield return new WaitForSeconds(BarManager.instance.resetDelay);
+
+            gameObject.SetActive(false);
+            BarManager.instance.UpdateSeat(seatID);
+            Destroy(this.gameObject);
+
+            yield break;
+        }
+
+
+        #region Order Balloon
+
+        public Image timeBar;
+
+        protected float timeLimit;
+        protected float currentTime;
+
+        protected IEnumerator timeBarCoroutine;
+        
+        public virtual void UpdateBalloon()
+        {
+            //timeLimit = order.waitingTime;
+            currentTime = timeLimit;
+            
+            timeBarCoroutine = UpdateTimeBar();
+            StartCoroutine(timeBarCoroutine);
+        }
+
+        protected IEnumerator UpdateTimeBar()
+        {
+            while (currentTime > 0)
+            {
+                currentTime -= 0.1f;
+                timeBar.fillAmount = currentTime / timeLimit;
+
+                yield return new WaitForSeconds(0.1f);
+            }
+
+            FailedOrder();
+
+            yield break;
+        }
+
+        private void FailedOrder()
+        {
+            canServe = false;
+            StopCoroutine(timeBarCoroutine);
+            orderBalloon.SetActive(false);
+            angryImg.SetActive(true);
+            TycoonManager.instance.ActivateAngryUI(seatID);
+            StartCoroutine(ResetSeat());
+        }
+
+        #endregion
+
+
+        void Awake()
+        {
+            audioSource = GetComponent<AudioSource>();
+            audioSource.volume = GameManager.instance.settings.soundEffectsVolume;
+        }
     }
 }

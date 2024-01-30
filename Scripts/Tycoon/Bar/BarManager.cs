@@ -1,116 +1,123 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
+using UnityEngine.UI;
 
-public class BarManager : MonoBehaviour
+namespace Tycoon
 {
-    public static BarManager instance;
-
-    public GameObject normalSeatPrefab;
-    public GameObject specialSeatPrefab;
-    
-    public GameObject[] seats;
-
-    public float resetDelay;
-
-    public void UpdateSeat(int seatID)
+    public class BarManager : MonoBehaviour
     {
-        if (TycoonManager.instance.orderList.Count == 0)
-        {
-            TycoonManager.instance.EndTycoon();
-        }
-        else
-        {
-            int orderID = Random.Range(0, TycoonManager.instance.orderList.Count);
-            Order tempOrder = TycoonManager.instance.orderList[orderID];
+        public static BarManager instance;
 
-            GameObject tempSeat;
-            
-            if (tempOrder.isSpecial == true)
+        public GameObject normalSeatPrefab;
+        public GameObject specialSeatPrefab;
+
+        public GameObject[] seats;
+        public Text leftOrderText;
+
+        public float resetDelay;
+
+        public void UpdateSeat(int seatID)
+        {
+            if (TycoonManager.instance.orderList.Count == 0)
             {
-                tempSeat = Instantiate(specialSeatPrefab);
+                TycoonManager.instance.EndTycoon();
             }
             else
             {
-                tempSeat = Instantiate(normalSeatPrefab);
+                int orderID = Random.Range(0, TycoonManager.instance.orderList.Count);
+                Order tempOrder = TycoonManager.instance.orderList[orderID];
+
+                GameObject tempSeat;
+
+                if (tempOrder.isSpecial)
+                {
+                    tempSeat = Instantiate(specialSeatPrefab);
+                }
+                else
+                {
+                    tempSeat = Instantiate(normalSeatPrefab);
+                }
+
+                tempSeat.transform.SetParent(seats[seatID].transform);
+                tempSeat.transform.localPosition = Vector3.zero;
+                tempSeat.GetComponent<SeatController>().UpdateSeat(tempOrder);
+                tempSeat.GetComponent<SeatController>().seatID = seatID;
+
+                TycoonManager.instance.orderList.RemoveAt(orderID);
+                leftOrderText.text = TycoonManager.instance.orderList.Count + " Έν";
             }
-            
-            tempSeat.transform.SetParent(seats[seatID].transform);
-            tempSeat.transform.localPosition = Vector3.zero;
-            tempSeat.GetComponent<SeatController>().UpdateSeat(tempOrder);
-            tempSeat.GetComponent<SeatController>().seatID = seatID;
-
-            TycoonManager.instance.orderList.RemoveAt(orderID);
         }
-    }
 
-    #region Manage Plates
+        #region Manage Plates
 
-    public GameObject foodPrefab;
-    public GameObject[] plates;
-    public string[] foodNames = new string[5];
+        public GameObject foodPrefab;
+        public GameObject[] plates;
+        public string[] foodNames = new string[5];
 
-    public bool GetServed(string recipeName)
-    {
-        bool fullFlag = false;
-
-        for (int i = 0; i < 5; i++)
+        public bool GetServed(string recipeName)
         {
-            if (foodNames[i] == "")
+            bool fullFlag = false;
+
+            for (int i = 0; i < 5; i++)
             {
-                fullFlag = false;
-                foodNames[i] = recipeName;
-                StartCoroutine(Plating(i));
-                break;
+                if (foodNames[i] == "")
+                {
+                    fullFlag = false;
+                    foodNames[i] = recipeName;
+                    StartCoroutine(Plating(i));
+                    break;
+                }
+
+                fullFlag = true;
             }
-            fullFlag = true;
+
+            if (fullFlag == true)
+            {
+                return false;
+            }
+
+            return true;
         }
 
-        if (fullFlag == true)
+        IEnumerator Plating(int plateIndex)
         {
-            return false;
+            yield return new WaitForSeconds(2.5f);
+
+            GameObject tempFood = Instantiate(foodPrefab, plates[plateIndex].transform);
+            tempFood.GetComponent<FoodController>().UpdateFood(plateIndex, foodNames[plateIndex]);
+            tempFood.transform.SetParent(plates[plateIndex].transform);
         }
 
-        return true;
-    }
-
-    IEnumerator Plating(int plateIndex)
-    {
-        yield return new WaitForSeconds(2.5f);
-
-        GameObject tempFood = Instantiate(foodPrefab, plates[plateIndex].transform);
-        tempFood.GetComponent<FoodController>().UpdateFood(plateIndex, foodNames[plateIndex]);
-        tempFood.transform.SetParent(plates[plateIndex].transform);
-    }
-
-    public void ResetPlate(int plateIndex)
-    {
-        foodNames[plateIndex] = "";
-    }
-
-    #endregion
-
-
-    void Awake()
-    {
-        if (instance == null)
+        public void ResetPlate(int plateIndex)
         {
-            instance = this;
+            foodNames[plateIndex] = "";
         }
-        else
-        {
-            if (instance != this)
-                Destroy(this.gameObject);
-        }
-    }
 
-    void Start()
-    {
-        for (int i = 0; i < 3; i++)
+        #endregion
+
+
+        void Awake()
         {
-            UpdateSeat(i);
+            if (instance == null)
+            {
+                instance = this;
+            }
+            else
+            {
+                if (instance != this)
+                    Destroy(this.gameObject);
+            }
+        }
+
+        void Start()
+        {
+            GetComponent<AudioSource>().volume = GameManager.instance.settings.backgroundMusicVolume;
+            
+            for (int i = 0; i < 3; i++)
+            {
+                UpdateSeat(i);
+            }
         }
     }
 }

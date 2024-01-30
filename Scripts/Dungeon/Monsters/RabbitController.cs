@@ -10,7 +10,7 @@ public class RabbitController : MonsterController
     public float copyDelay;
     float copyTimer = 0f;
 
-    //±¸ ¹Ý°æ
+    //ï¿½ï¿½ ï¿½Ý°ï¿½
     public float maxRadiusScale;
 
     RaycastHit hit;
@@ -33,10 +33,10 @@ public class RabbitController : MonsterController
                     isHit = Physics.SphereCast(transform.position, radiusScale, pos, out hit);
                 }
 
-                GameObject copiedRabbit = Instantiate(rabbitPrefab, transform.position + pos * radiusScale, Quaternion.Euler(0, 0, 0));
+                GameObject copiedRabbit = Instantiate(rabbitPrefab, gameObject.transform.parent.transform);
+                copiedRabbit.transform.position = transform.position + pos * radiusScale;
                 copiedRabbit.GetComponent<RabbitController>().isOriginal = false;
-
-                DungeonManager.instance.monsterCount++;
+                
                 copyTimer = 0;
             }
         }
@@ -48,34 +48,16 @@ public class RabbitController : MonsterController
     {
         if (isOriginal == true)
         {
-            int random = Random.Range(0, 100);
-
-            int itemIndex = -1;
-            int tempProb = 0;
-
-            for (int i = 0; i < itemProb.Length; i++)
-            {
-                if (random <= itemProb[i] + tempProb)
-                {
-                    itemIndex = i;
-                }
-                else break;
-
-                tempProb += itemProb[i];
-            }
-
-            if (itemIndex != -1)
-            {
-                Instantiate(itemArray[itemIndex], transform.position, Quaternion.Euler(0, 0, 0));
-            }
+            base.Dead();
         }
-
-        DungeonManager.instance.UpdateMonsterCount();
-        Destroy(gameObject);
+        else
+        {
+            Destroy(gameObject);
+        }
     }
 
     // Update is called once per frame
-    protected override void Update()
+    protected override void FixedUpdate()
     {
         switch (state)
         {

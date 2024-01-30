@@ -1,14 +1,16 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
+using Debug = UnityEngine.Debug;
 
 public class IngredientController : MonoBehaviour, IBeginDragHandler, IEndDragHandler, IDragHandler
 {
     Vector3 DefaultPos;
 
-    public enum IngredientState { Idle, Dropped, Dumped };
+    public enum IngredientState { Idle, Dropped, Plated, Dumped };
     public IngredientState ingredientState = IngredientState.Idle;
 
     [HideInInspector]
@@ -42,14 +44,28 @@ public class IngredientController : MonoBehaviour, IBeginDragHandler, IEndDragHa
     {
         if (ingredientState == IngredientState.Idle)
         {
-            this.transform.position = DefaultPos;
+            transform.position = DefaultPos;
+        }
+        else if (ingredientState == IngredientState.Plated)
+        {
+            GetComponent<RectTransform>().anchoredPosition = new Vector2(0, -32f);
+            ingredientState = IngredientState.Idle;
         }
         else
         {
             if (isStarted == false)
             {
-                ItemManager.instance.inventory[this.name]--;
-                beforeBowl.GetComponent<BeforeBowlController>().UpdateBowl();
+                try
+                {
+                    var temp = IncaTernTycoon.IncaTernController.instance.isIncaTern;
+                    beforeBowl.GetComponent<IncaTernTycoon.BeforeBowlController>().UpdateBowl();
+                }
+                catch (System.Exception)
+                {
+                    GameManager.instance.inventory[name]--;
+                    beforeBowl.GetComponent<Tycoon.BeforeBowlController>().UpdateBowl();
+                }
+                
                 isStarted = true;
             }
 
@@ -74,12 +90,12 @@ public class IngredientController : MonoBehaviour, IBeginDragHandler, IEndDragHa
     {
         float c = GetComponent<Image>().color.r;
         GetComponent<Image>().color = new Color(c, c, c, 0f);
-        
+
         for (int i = 0; i < 3; i++)
         {
             cookingColors[i].SetActive(false);
         }
-        
+
         cookingSequences.Add(cookerName);
     }
 
@@ -91,7 +107,7 @@ public class IngredientController : MonoBehaviour, IBeginDragHandler, IEndDragHa
         {
             cookingColors[i].SetActive(true);
         }
-        
+
         currentCCID++;
 
         if (currentCCID >= 3)
@@ -103,9 +119,9 @@ public class IngredientController : MonoBehaviour, IBeginDragHandler, IEndDragHa
 
     public void Initialize(string ingredientName)
     {
-        this.name = ingredientName;
+        name = ingredientName;
         beforeBowl = transform.parent.gameObject;
-        GetComponent<Image>().sprite = Resources.Load<Sprite>("Dots/Tycoon/" + ingredientName);
+        GetComponent<Image>().sprite = Resources.Load<Sprite>("Dots/Items/" + ingredientName);
         GetComponent<RectTransform>().anchoredPosition = new Vector3(0, 0, 90f);
     }
 }

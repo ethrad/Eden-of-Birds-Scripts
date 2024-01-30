@@ -6,6 +6,10 @@ public class NextRoomPortal : MonoBehaviour
 {
     private void OnTriggerEnter2D(Collider2D collision)
     {
-        DungeonManager.instance.ClearRoom();
+        if (collision.CompareTag("player"))
+        {
+            DungeonManager.instance.StopPlayerMoving();
+            DungeonManager.instance.MoveToNextFloor();
+        }
     }
 }

@@ -5,63 +5,85 @@ using UnityEngine.EventSystems;
 using UnityEngine.UI;
 using System.Linq;
 
-public class SpecialSeatController : SeatController
+namespace Tycoon
 {
-    [HideInInspector]
-    public Order order;
-
-    public Text dialogue;
-
-    public string residentName;
-
-    public override void OnDrop(PointerEventData eventData)
+    public class SpecialSeatController : SeatController
     {
-        string foodName = eventData.pointerDrag.GetComponent<FoodController>().foodName;
+        [HideInInspector] public Order order;
 
-        int intersectCount = TycoonManager.instance.menus[foodName].properties
-            .Intersect(GameManager.instance.specialResidentInfo[residentName].properties).Count();
-        
-        StopCoroutine(UpdateTimeBar());
-        orderBalloon.SetActive(false);
+        public Text dialogue;
+        public GameObject heartImg;
+        public Text friendShipText;
+        public string residentName;
 
-        // 호감도 얼만큼 올랐는지 표시하는 UI 넣기
-        // 겹치는 속성 * 1 만큼 호감도 증가
+        public override void OnDrop(PointerEventData eventData)
+        {
+            if (!canServe) return;
+            
+            string foodName = eventData.pointerDrag.GetComponent<FoodController>().foodName;
 
+            int intersectCount = GameManager.instance.menus[foodName].properties
+                .Intersect(TycoonManager.instance.specialResidentInfo[residentName].properties).Count();
 
-        // 팁 추가
-        TycoonManager.instance.earnedGold += Mathf.RoundToInt(intersectCount * 0.2f * TycoonManager.instance.menus[foodName].gold);
+            StopCoroutine(timeBarCoroutine);
+            orderBalloon.SetActive(false);
+            
+            GameManager.instance.SetFriendShip(residentName, intersectCount, false);
+            
+            orderBalloon.SetActive(false);
+            heartImg.SetActive(true);
+            friendShipText.text = intersectCount.ToString();
 
-        StartCoroutine(ResetSeat());
+            // 팁 추가
+            TycoonManager.instance.EarnGold(Mathf.RoundToInt(intersectCount * 0.2f * GameManager.instance.menus[foodName].gold));
+            eventData.pointerDrag.GetComponent<FoodController>().ResetPlate();
+            
+            foreach (var t in gameObject.GetComponents<QuestTrigger>())
+            {
+                if (t.questType == 8)
+                {
+                    t.goalName = residentName;
+                }
 
-        Destroy(eventData.pointerDrag);
+                t.OnQuestTrigger();
+            }
+            
+            canServe = false;
+            StartCoroutine(ResetSeat());
+
+            Destroy(eventData.pointerDrag);
+        }
+
+        public override void UpdateSeat(Order order)
+        {
+            this.order = order;
+
+            residentName = order.residentName;
+
+            characterImage.GetComponent<Animator>().runtimeAnimatorController =
+                Resources.Load<RuntimeAnimatorController>("Animations/" + order.residentName);
+
+            audioSource.clip = audioEnter;
+            audioSource.Play();
+
+            gameObject.SetActive(true);
+
+            UpdateBalloon();
+            orderBalloon.SetActive(true);
+            canServe = true;
+        }
+
+        #region Order Balloon
+
+        public override void UpdateBalloon()
+        {
+            dialogue.text = TycoonManager.instance.specialResidentInfo[residentName].tycoonDialogue;
+            timeLimit = order.waitingTime;
+            currentTime = timeLimit;
+            timeBarCoroutine = UpdateTimeBar();
+            StartCoroutine(timeBarCoroutine);
+        }
+
+        #endregion
     }
-    
-    public override void UpdateSeat(Order order)
-    {
-        this.order = order;
-
-        residentName = order.residentName;
-
-        characterImage.GetComponent<Animator>().runtimeAnimatorController = Resources.Load<RuntimeAnimatorController>("Animations/" + order.residentName);
-
-        audioSource.clip = audioEnter;
-        audioSource.Play();
-        
-        gameObject.SetActive(true);
-        
-        UpdateBalloon();
-        orderBalloon.SetActive(true);
-    }
-
-    #region Order Balloon
-
-    public override void UpdateBalloon()
-    {
-        dialogue.text = GameManager.instance.specialResidentInfo[residentName].dialogue;
-        timeLimit = order.waitingTime;
-        currentTime = timeLimit;
-        StartCoroutine(UpdateTimeBar());
-    }
-    
-    #endregion
 }

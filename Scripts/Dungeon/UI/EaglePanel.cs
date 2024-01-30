@@ -2,36 +2,41 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
-using UnityEngine.SceneManagement;
 
 public class EaglePanel : MonoBehaviour
 {
     public void OnSpeechBalloonClicked()
     {
         Initialize();
+        DungeonManager.instance.StopPlayerMoving();
         gameObject.SetActive(true);
     }
 
-    public GameObject dungeonContinueButton;
-
     public GameObject dialogueText;
 
-    public void OnDungeonContinueButtonClicked()
+    public void OnEscapeButtonClicked()
     {
-        gameObject.SetActive(false);
-    }
-
-    public void OnDungeonExitButtonClicked()
-    {
+        if (DungeonManager.instance.isAllCleared)
+        {
+            DungeonManager.instance.ClearAllDungeon();
+            gameObject.SetActive(false);
+            return;
+        }
+        
         DungeonManager.instance.ClearDungeon();
         gameObject.SetActive(false);
     }
 
+    public void OnExitButtonClicked()
+    {
+        gameObject.SetActive(false);
+        DungeonManager.instance.StartPlayerMoving(true);
+    }
+
     public void Initialize()
     {
-        if (DungeonManager.instance.isDungeonCleared == true)
+        if (DungeonManager.instance.isAllCleared)
         {
-            dungeonContinueButton.SetActive(false);
             dialogueText.GetComponent<Text>().text = "시간이 늦었어. 이만 가자.";
         }
     }

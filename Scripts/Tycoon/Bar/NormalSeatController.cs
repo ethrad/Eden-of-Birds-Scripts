@@ -4,90 +4,99 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-public class NormalSeatController : SeatController
+namespace Tycoon
 {
-    public GameObject heartImg;
-    
-    [HideInInspector]
-    public NormalOrder order;
-
-    int servedFoodCount = 0;
-
-    public override void OnDrop(PointerEventData eventData)
+    public class NormalSeatController : SeatController
     {
-        bool isOrdered = false;
-        for (int i = 0; i < order.menuList.Count; i++)
+        public GameObject heartImg;
+
+        [HideInInspector] public NormalOrder order;
+
+        int servedFoodCount = 0;
+
+        public override void OnDrop(PointerEventData eventData)
         {
-            if (order.menuList[i] == eventData.pointerDrag.GetComponent<FoodController>().foodName)
+            if (!canServe) return;
+            
+            bool isOrdered = false;
+            for (int i = 0; i < order.menuList.Count; i++)
             {
-                isOrdered = true;
-                order.menuList[i] = "";
-                MarkServedFood(i);
-                servedFoodCount++;
-                TycoonManager.instance.EarnGold(eventData.pointerDrag.GetComponent<FoodController>().foodName);
-                eventData.pointerDrag.GetComponent<FoodController>().ResetPlate();
-
-                if (servedFoodCount == order.menuList.Count)
+                if (order.menuList[i] == eventData.pointerDrag.GetComponent<FoodController>().foodName)
                 {
-                    // 모든 음식을 다 서빙했음
-                    StopCoroutine(UpdateTimeBar());
-                    orderBalloon.SetActive(false);
-                    heartImg.SetActive(true);
+                    isOrdered = true;
+                    order.menuList[i] = "";
+                    MarkServedFood(i);
+                    servedFoodCount++;
+                    TycoonManager.instance.EarnGold(eventData.pointerDrag.GetComponent<FoodController>().foodName);
+                    eventData.pointerDrag.GetComponent<FoodController>().ResetPlate();
 
-                    StartCoroutine(ResetSeat());
+                    if (servedFoodCount == order.menuList.Count)
+                    {
+                        // 모든 음식을 다 서빙했음
+                        StopCoroutine(timeBarCoroutine);
+                        orderBalloon.SetActive(false);
+                        heartImg.SetActive(true);
+
+                        StartCoroutine(ResetSeat());
+                    }
+
+                    Destroy(eventData.pointerDrag);
+                    break;
                 }
-                Destroy(eventData.pointerDrag);
-                break;
+            }
+
+            if (isOrdered == false)
+            {
+                // 틀린 음식을 서빙했다는 대사 출력?
             }
         }
 
-        if (isOrdered == false)
+        public override void UpdateSeat(Order order)
         {
-            // 틀린 음식을 서빙했다는 대사 출력?
-        }
-    }
+            this.order = (NormalOrder)order;
 
-    public override void UpdateSeat(Order order)
-    {
-        this.order = (NormalOrder)order;
+            int random = Random.Range(1, 4);
+            order.residentName += random.ToString();
 
-        int random = Random.Range(1, 4);
-        order.residentName += random.ToString();
+            characterImage.GetComponent<Animator>().runtimeAnimatorController =
+                Resources.Load<RuntimeAnimatorController>("Animations/" + order.residentName);
 
-        characterImage.GetComponent<Animator>().runtimeAnimatorController = Resources.Load<RuntimeAnimatorController>("Animations/" + order.residentName);
+            audioSource.clip = audioEnter;
+            audioSource.Play();
 
-        audioSource.clip = audioEnter;
-        audioSource.Play();
-        
-        gameObject.SetActive(true);
-        
-        UpdateBalloon();
-        orderBalloon.SetActive(true);
-    }
+            gameObject.SetActive(true);
 
-    
-    #region Order Balloon
-    
-    public string residentName;
-    
-    public GameObject[] foodImages; // 자식에 x 표시 된 것 만들기
-
-    public override void UpdateBalloon()
-    {
-        for (int i = 0; i < order.menuList.Count; i++)
-        {
-            foodImages[i].GetComponent<Image>().sprite = Resources.Load<Sprite>("Dots/Tycoon/" + order.menuList[i]);
+            UpdateBalloon();
+            orderBalloon.SetActive(true);
+            canServe = true;
         }
 
-        timeLimit = order.waitingTime;
-        currentTime = timeLimit;
-        StartCoroutine(UpdateTimeBar());
-    }
 
-    public void MarkServedFood(int foodIndex)
-    {
-        foodImages[foodIndex].transform.GetChild(0).gameObject.SetActive(true);
+        #region Order Balloon
+
+        public string residentName;
+
+        public GameObject[] foodImages; // 자식에 x 표시 된 것 만들기
+
+        public override void UpdateBalloon()
+        {
+            for (int i = 0; i < order.menuList.Count; i++)
+            {
+                foodImages[i].GetComponent<Image>().sprite =
+                    Resources.Load<Sprite>("Dots/Tycoon/Foods/" + order.menuList[i]);
+            }
+
+            timeLimit = order.waitingTime;
+            currentTime = timeLimit;
+            timeBarCoroutine = UpdateTimeBar();
+            StartCoroutine(timeBarCoroutine);
+        }
+
+        public void MarkServedFood(int foodIndex)
+        {
+            foodImages[foodIndex].transform.GetChild(0).gameObject.SetActive(true);
+        }
+
+        #endregion
     }
-    
-    #endregion
 }

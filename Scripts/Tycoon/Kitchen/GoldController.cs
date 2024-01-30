@@ -10,7 +10,7 @@ public class GoldController : MonoBehaviour
 
     IEnumerator coinUp()
     {
-        for (float a = -26f; a <= upLength; a += Time.deltaTime * moveSpeed)
+        for (float a = 16f; a <= upLength; a += Time.deltaTime * moveSpeed)
         {
             transform.GetComponent<RectTransform>().anchoredPosition = new Vector2(transform.GetComponent<RectTransform>().anchoredPosition.x, a);
             //transform.Rotate(new Vector2(0, a * rotationSpeed));

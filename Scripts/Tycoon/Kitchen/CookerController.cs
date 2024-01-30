@@ -14,17 +14,24 @@ public class CookerController : MonoBehaviour, IDropHandler
 
     public void OnDrop(PointerEventData eventData)
     {
-        if (transform.childCount == 1 && eventData.pointerDrag.GetComponent<IngredientController>().canCook == true)
+        try
         {
-            if (eventData.pointerDrag.GetComponent<IngredientController>().ingredientState == IngredientController.IngredientState.Idle)
+            if (transform.childCount == 1 && eventData.pointerDrag.GetComponent<IngredientController>().canCook == true)
             {
-                ingredient = eventData.pointerDrag;
-                ingredient.GetComponent<IngredientController>().ingredientState = IngredientController.IngredientState.Dropped;
-                ingredient.transform.SetParent(this.transform);
-                ingredient.GetComponent<RectTransform>().anchoredPosition = new Vector3(0, 0, 0);
+                if (eventData.pointerDrag.GetComponent<IngredientController>().ingredientState == IngredientController.IngredientState.Idle)
+                {
+                    ingredient = eventData.pointerDrag;
+                    ingredient.GetComponent<IngredientController>().ingredientState = IngredientController.IngredientState.Dropped;
+                    ingredient.transform.SetParent(this.transform);
+                    ingredient.GetComponent<RectTransform>().anchoredPosition = new Vector3(0, 0, 0);
 
-                StartCoroutine(Cooking());
+                    StartCoroutine(Cooking());
+                }
             }
+        }
+        catch (System.Exception e)
+        {
+            Debug.Log(e);
         }
     }
 
@@ -48,16 +55,16 @@ public class CookerController : MonoBehaviour, IDropHandler
         yield return new WaitForSeconds(cookingTime);
         ingredient.GetComponent<Image>().color = new Color(c - 0.2f, c - 0.2f, c - 0.2f);
         ingredient.GetComponent<IngredientController>().UpdateCookingColor(color);
-        
+
         ingredient.GetComponent<Image>().raycastTarget = true;
         effectObject.SetActive(false);
 
-        if (isShaker == true)
+        if (isShaker)
         {
             GetComponent<Image>().color = new Color(1, 1, 1);
         }
 
-        yield return null;
+        yield break;
     }
 
 
@@ -66,6 +73,7 @@ public class CookerController : MonoBehaviour, IDropHandler
 
     void Start()
     {
-        this.audioSource = GetComponent<AudioSource>();
+        audioSource = GetComponent<AudioSource>();
+        audioSource.volume = GameManager.instance.settings.soundEffectsVolume;
     }
 }

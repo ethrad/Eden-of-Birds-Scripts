@@ -6,23 +6,24 @@ public class MonsterBullet : Bullet
 {
     public override void OnTriggerEnter2D(Collider2D col)
     {
-        if (col.gameObject.tag == "Wall" || col.gameObject.tag == "Object")
+        if (col.gameObject.CompareTag("Wall") || col.gameObject.CompareTag("Object"))
         {
-            Destroy(this.gameObject);
+            DungeonManager.instance.ReturnObject(poolingObjectName, gameObject);
         }
 
-        if (col.gameObject.tag == targetTag)
+        if (col.gameObject.CompareTag(targetTag))
         {
             col.gameObject.GetComponent<PlayerController>().Damaged(damage);
-            Destroy(this.gameObject);
+            DungeonManager.instance.ReturnObject(poolingObjectName, gameObject);
         }
     }
 
-    public override void Initialize(Vector3 pos)
+    // 위치 지정, 데미지 지정, 플레이어 방향으로 향하도록 설정
+    public void Initialize(Vector3 pos, int damage)
     {
+        this.damage = damage;
         transform.position = pos;
-        dir = DungeonManager.instance.player.transform.position - pos;
-        dir = dir.normalized;
+        dir = (DungeonManager.instance.player.transform.position - transform.position).normalized;
         StartCoroutine(DestroySelf());
     }
 }

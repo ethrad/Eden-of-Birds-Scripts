@@ -1,27 +1,40 @@
+using BossMonster;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class PlayerBullet : Bullet
+namespace Dungeon
 {
-    public override void OnTriggerEnter2D(Collider2D col)
+    public class PlayerBullet : Bullet
     {
-        if (col.gameObject.tag == "Wall" || col.gameObject.tag == "Object")
+        public override void OnTriggerEnter2D(Collider2D col)
         {
-            Destroy(this.gameObject);
+            if (col.gameObject.CompareTag("Wall") || col.gameObject.CompareTag("Object"))
+            {
+                Destroy(gameObject);
+            }
+
+            if (col.gameObject.CompareTag(targetTag) && !col.isTrigger)
+            {
+                col.gameObject.GetComponent<MonsterController>().Damaged(gameObject);
+                Destroy(gameObject);
+            }
+
+            if (col.gameObject.CompareTag("BossMonster"))
+            {
+                col.gameObject.GetComponent<BossMonsterController>().Damaged(gameObject);
+                Destroy(gameObject);
+            }
         }
 
-        if (col.gameObject.tag == targetTag && !col.isTrigger)
+        public override void Initialize(Vector3 dir)
         {
-            col.gameObject.GetComponent<MonsterController>().Damaged(damage);
-            Destroy(this.gameObject);
-        }
-    }
+            damage = DungeonManager.instance.player.GetComponent<PlayerController>().ATK;
 
-    public override void Initialize(Vector3 dir)
-    {
-        transform.position = DungeonManager.instance.player.transform.position;
-        this.dir = dir.normalized;
-        StartCoroutine(DestroySelf());
+            transform.position = DungeonManager.instance.player.transform.position;
+            this.dir = dir.normalized;
+            StartCoroutine(DestroySelf());
+        }
     }
 }

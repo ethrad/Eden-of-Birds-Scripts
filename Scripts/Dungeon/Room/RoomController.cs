@@ -2,80 +2,135 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using Cinemachine;
+using System;
+using Random = UnityEngine.Random;
 
 public class RoomController : MonoBehaviour
 {
-    #region Initialize
-    public GameObject[] monsterPrefabs;
-    public int[] monsterNums;
+    public enum RoomType { Start, Top, Left, Right, End }
+    
+    private RoomType roomType;
+    private int height;
+    
+    // 북서, 남서, 북동, 남동 순서
+    public GameObject roofs; // 나무로 막힌 길
+    public GameObject path; // 진짜 길
+    public GameObject path2; // 겹치는 길
 
-    public GameObject monsterSpawnAreas;
-    public GameObject playerSpawner;
+    public GameObject lastRoomRoofs;
+    public GameObject bossRoomRoofs;
 
-    public GameObject bound;
-
-    Vector3 GetRandomPosition()
+    public GameObject cameraBound;
+    
+    public void SetRoom(int height, RoomType t)
     {
-        int areaNum = 0;
-
-        float randomX;
-        float randomY;
-
-        areaNum = Random.Range(0, monsterSpawnAreas.transform.childCount);
-        GameObject selectedSpawnArea = monsterSpawnAreas.transform.GetChild(areaNum).gameObject;
-
-        float dungeonCenterX = selectedSpawnArea.transform.position.x;
-        float dungeonCenterY = selectedSpawnArea.transform.position.y;
-
-        float dungeonRangeX = selectedSpawnArea.transform.localScale.x / 2;
-        float dungeonRangeY = selectedSpawnArea.transform.localScale.y / 2;
-
-        randomX = Random.Range(dungeonCenterX - dungeonRangeX, dungeonCenterX + dungeonRangeX);
-        randomY = Random.Range(dungeonCenterY - dungeonRangeY, dungeonCenterY + dungeonRangeY);
-
-
-        return new Vector3(randomX, randomY, 0);
-    }
-
-    void SpawnMonster()
-    {
-        for (int i = 0; i < monsterPrefabs.Length; i++)
+        roomType = t;
+        this.height = height;
+        
+        switch (t)
         {
-            for (int j = 0; j < monsterNums[i]; j++)
-            {
-                GameObject tempMonster = Instantiate(monsterPrefabs[i], GetRandomPosition(), Quaternion.Euler(0, 0, 0));
-                //tempMonster.GetComponent<MonsterController>().monsterIndex = i;
-            }
+            case RoomType.Top:
+                transform.position = new Vector3(0, height * 7.04f, 0);
+                path2.transform.GetChild(1).gameObject.SetActive(true);
+                path2.transform.GetChild(3).gameObject.SetActive(true);
+                
+                path.transform.GetChild(0).gameObject.SetActive(true);
+                path.transform.GetChild(2).gameObject.SetActive(true);
+                break;
+            case RoomType.Left:
+                transform.position = new Vector3(-3.52f, height * 7.04f + 3.52f, 0);
+                roofs.transform.GetChild(0).gameObject.SetActive(true);
+                roofs.transform.GetChild(1).gameObject.SetActive(true);
+                
+                path.transform.GetChild(2).gameObject.SetActive(true);
+                
+                path2.transform.GetChild(3).gameObject.SetActive(true);
+                break;
+            case RoomType.Right:
+                transform.position = new Vector3(3.52f, height * 7.04f + 3.52f, 0);
+                roofs.transform.GetChild(2).gameObject.SetActive(true);
+                roofs.transform.GetChild(3).gameObject.SetActive(true);
+                
+                path.transform.GetChild(0).gameObject.SetActive(true);
+                
+                path2.transform.GetChild(1).gameObject.SetActive(true);
+                break;
+            
+            case RoomType.Start:
+                transform.position = new Vector3(0, 0, 0);
+                roofs.transform.GetChild(1).gameObject.SetActive(true);
+                roofs.transform.GetChild(3).gameObject.SetActive(true);
+                
+                path.transform.GetChild(0).gameObject.SetActive(true);
+                path.transform.GetChild(2).gameObject.SetActive(true);
+                break;
+            
+            case RoomType.End:
+                transform.position = new Vector3(0, height * 7.04f, 0);
+                
+                if (DungeonManager.instance.floor == 2)
+                {
+                    bossRoomRoofs.SetActive(true);
+                }
+                else
+                {
+                    lastRoomRoofs.SetActive(true);
+                }
+                
+                path2.transform.GetChild(1).gameObject.SetActive(true);
+                path2.transform.GetChild(3).gameObject.SetActive(true);
+                break;
         }
-
-        monsterSpawnAreas.SetActive(false);
     }
 
-    void SpawnPlayer()
+    public GameObject MakeByoRoom()
     {
-        DungeonManager.instance.player.transform.position = playerSpawner.transform.position;
-    }
+        // 0은 위, 1은 아래 방 생성
+        int random = Random.Range(0, 2);
+        GameObject tempByoRoom = Instantiate(DungeonManager.instance.byoRoomPrefab);
 
-    #endregion
-
-    public GameObject eagle;
-    public GameObject nextRoomPortal;
-
-    public void ClearRoom(bool isDungeonCleared)
-    {
-        eagle.SetActive(true);
-
-        if (isDungeonCleared == false)
+        Vector3 tempPos = default(Vector3);
+        ByoRoomController.RoomType tempRoomType = ByoRoomController.RoomType.NorthWest;
+        int pathNum = 0;
+        
+        switch (roomType)
         {
-            nextRoomPortal.SetActive(true);
+            case RoomType.Left:
+                if (random == 0)
+                {
+                    pathNum = 0;
+                    tempPos = transform.position + new Vector3(-3.52f, 3.52f, 0);
+                    tempRoomType = ByoRoomController.RoomType.NorthWest;
+                }
+                else
+                {
+                    pathNum = 1;
+                    tempPos = transform.position + new Vector3(-3.52f, -3.52f, 0);
+                    tempRoomType = ByoRoomController.RoomType.SouthWest;
+                }
+                break;
+            
+            case RoomType.Right:
+                if (random == 0)
+                {
+                    pathNum = 2;
+                    tempPos = transform.position + new Vector3(3.52f, 3.52f, 0);
+                    tempRoomType = ByoRoomController.RoomType.NorthEast;
+                    
+                }
+                else
+                {
+                    pathNum = 3;
+                    tempPos = transform.position + new Vector3(3.52f, -3.52f, 0);
+                    tempRoomType = ByoRoomController.RoomType.SouthEast;
+                }
+                break;
         }
-    }
+        
+        roofs.transform.GetChild(pathNum).gameObject.SetActive(false);
+        path.transform.GetChild(pathNum).gameObject.SetActive(true);
+        tempByoRoom.GetComponent<ByoRoomController>().SetRoom(tempPos, tempRoomType);
 
-    public void Initialize()
-    {
-        SpawnMonster();
-        SpawnPlayer();
-
-        DungeonManager.instance.virtualCamera.GetComponent<CinemachineConfiner>().m_BoundingShape2D = bound.GetComponent<Collider2D>();
+        return tempByoRoom;
     }
 }

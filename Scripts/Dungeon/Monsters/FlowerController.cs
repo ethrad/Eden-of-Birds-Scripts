@@ -6,7 +6,7 @@ public class FlowerController : MonsterController
 {
     protected override void OnTriggerEnter2D(Collider2D col)
     {
-        if (col.gameObject.tag == "player")
+        if (col.gameObject.CompareTag("player"))
         {
             state = State.Attack;
         }
@@ -14,7 +14,7 @@ public class FlowerController : MonsterController
 
     protected override void OnTriggerExit2D(Collider2D col)
     {
-        if (col.gameObject.tag == "player")
+        if (col.gameObject.CompareTag("player"))
         {
             state = State.Idle;
         }
@@ -37,7 +37,8 @@ public class FlowerController : MonsterController
         {
             GameObject bullet = DungeonManager.instance.GetObject("MonsterBullet");
             bullet.transform.SetParent(transform);
-            bullet.GetComponent<Bullet>().Initialize(transform.position);
+            bullet.GetComponent<MonsterBullet>().Initialize(transform.position, ATK);
+            canAttack = false;
             StartCoroutine(AttackDelay());
             anim.SetTrigger("Attack");
         }
@@ -46,11 +47,25 @@ public class FlowerController : MonsterController
 
     Vector3 targetDir;
 
-    protected override void Update()
+
+    protected override void Start()
+    {
+        isFixed = true;
+        damagedState = DamagedState.Idle;
+        anim = GetComponent<Animator>();
+        spriteRenderer = GetComponent<SpriteRenderer>();
+        audioSource = GetComponent<AudioSource>();
+        audioSource.volume = GameManager.instance.settings.soundEffectsVolume;
+        target = DungeonManager.instance.player;
+        HP = maxHP = maxHPArr[DungeonManager.instance.floor];
+        ATK = ATKArr[DungeonManager.instance.floor];
+        canAttack = true;
+    }
+    
+    protected override void FixedUpdate()
     {
         targetDir = target.transform.position - transform.position;
         anim.SetFloat("TargetX", targetDir.x);
-
 
         switch (state)
         {
