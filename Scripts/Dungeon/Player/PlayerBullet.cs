@@ -12,19 +12,19 @@ namespace Dungeon
         {
             if (col.gameObject.CompareTag("Wall") || col.gameObject.CompareTag("Object"))
             {
-                Destroy(gameObject);
+                DungeonManager.instance.ReturnObject(poolingObjectName, gameObject);
             }
 
             if (col.gameObject.CompareTag(targetTag) && !col.isTrigger)
             {
                 col.gameObject.GetComponent<MonsterController>().Damaged(gameObject);
-                Destroy(gameObject);
+                DungeonManager.instance.ReturnObject(poolingObjectName, gameObject);
             }
 
             if (col.gameObject.CompareTag("BossMonster"))
             {
                 col.gameObject.GetComponent<BossMonsterController>().Damaged(gameObject);
-                Destroy(gameObject);
+                DungeonManager.instance.ReturnObject(poolingObjectName, gameObject);
             }
         }
 
